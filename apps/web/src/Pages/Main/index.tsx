@@ -3,6 +3,7 @@ import React, { Component } from "react";
 import "./index.css"
 import MainVM from "./vm";
 import { EmptyStateIllustration } from "./EmptyStateIllustration";
+import { Onboarding } from "../../Components/Onboarding";
 import { Space, SpaceService } from "@octo/base";
 import { JoinSpaceModalConnected, NavRail, MeInfo, SpaceCreate } from "@octo/base";
 import { consumeJoinSuccessNotice, showJoinSuccessToast } from "@octo/base";
@@ -269,6 +270,7 @@ export class MainPage extends Component<{}, MainPageState> {
                             }}
                             contentRight={<EmptyStateIllustration />}
                         />
+                        <Onboarding />
 
                         {/* MeInfo Modal */}
                         <WKModal
