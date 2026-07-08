@@ -35,13 +35,13 @@ const silkBackdropSettings = {
     textureScale: 0.96,
   },
   silk: {
-    hue: 264,
-    saturation: 0.68,
-    brightness: 0.96,
-    speed: 0.42,
+    hue: 238,
+    saturation: 0.58,
+    brightness: 0.91,
+    speed: 0.48,
     mouseSensitivity: 0.54,
     damping: 0.1,
-    textureScale: 1.08,
+    textureScale: 1.18,
   },
 };
 
