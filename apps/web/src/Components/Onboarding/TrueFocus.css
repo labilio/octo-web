@@ -6,19 +6,21 @@
     justify-content: center;
     gap: 32px;
     padding: 14px 8px;
-    color: rgba(255, 255, 255, 0.92);
+    color: color-mix(in srgb, var(--wk-neutral-0) 92%, transparent);
     user-select: none;
 }
 
 .wk-true-focus-word {
     position: relative;
     border-radius: 10px;
-    color: rgba(255, 255, 255, 0.54);
+    color: color-mix(in srgb, var(--wk-neutral-0) 54%, transparent);
     font-size: 44px;
     font-weight: var(--wk-font-bold);
     line-height: 1.05;
     letter-spacing: 0;
-    text-shadow: 0 0 26px rgba(124, 58, 237, 0.16);
+    text-shadow:
+        0 8px 24px color-mix(in srgb, var(--wk-neutral-950) 44%, transparent),
+        0 0 26px color-mix(in srgb, var(--wk-color-accent) 16%, transparent);
     transition:
         filter var(--wk-ease),
         color var(--wk-ease),
@@ -36,24 +38,27 @@
 }
 
 .wk-true-focus-word.is-active {
-    color: #ffffff;
+    color: var(--wk-neutral-0);
     text-shadow:
-        0 0 24px rgba(255, 255, 255, 0.2),
-        0 0 44px rgba(124, 58, 237, 0.28);
+        0 2px 0 color-mix(in srgb, var(--wk-neutral-950) 58%, transparent),
+        0 12px 30px color-mix(in srgb, var(--wk-neutral-950) 72%, transparent),
+        0 0 46px color-mix(in srgb, var(--wk-color-accent) 28%, transparent);
 }
 
 .wk-true-focus-initial {
-    color: #A78BFA;
+    color: color-mix(in srgb, var(--wk-color-accent) 68%, var(--wk-neutral-0));
     text-shadow:
-        0 0 18px rgba(167, 139, 250, 0.38),
-        0 0 34px rgba(124, 58, 237, 0.24);
+        0 1px 0 color-mix(in srgb, var(--wk-neutral-950) 52%, transparent),
+        0 8px 20px color-mix(in srgb, var(--wk-neutral-950) 56%, transparent),
+        0 0 32px color-mix(in srgb, var(--wk-color-accent) 34%, transparent);
 }
 
 .wk-true-focus-word.is-active .wk-true-focus-initial {
-    color: #C4B5FD;
+    color: color-mix(in srgb, var(--wk-color-accent) 46%, var(--wk-neutral-0));
     text-shadow:
-        0 0 22px rgba(196, 181, 253, 0.58),
-        0 0 42px rgba(124, 58, 237, 0.34);
+        0 1px 0 color-mix(in srgb, var(--wk-neutral-950) 56%, transparent),
+        0 8px 22px color-mix(in srgb, var(--wk-neutral-950) 58%, transparent),
+        0 0 40px color-mix(in srgb, var(--wk-color-accent) 42%, transparent);
 }
 
 .wk-true-focus-frame {
@@ -75,9 +80,15 @@
     position: absolute;
     width: 17px;
     height: 17px;
-    border: 2px solid var(--wk-focus-border, #A78BFA);
+    border: 2px solid var(
+        --wk-focus-border,
+        color-mix(in srgb, var(--wk-color-accent) 68%, var(--wk-neutral-0))
+    );
     border-radius: 3px;
-    filter: drop-shadow(0 0 8px var(--wk-focus-glow, rgba(124, 58, 237, 0.46)));
+    filter: drop-shadow(0 0 8px var(
+        --wk-focus-glow,
+        color-mix(in srgb, var(--wk-color-accent) 46%, transparent)
+    ));
 }
 
 .wk-true-focus-corner.is-top-left {

@@ -606,16 +606,17 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
 }
 
 .wk-onboarding-intro-copy h1 {
-    max-width: 620px;
+    width: min(760px, calc(100vw - 48px));
+    max-width: 760px;
     color: var(--wk-neutral-0);
     font: var(--wk-text-h1);
     font-size: 30px;
     line-height: 1.22;
     letter-spacing: 0;
     text-shadow:
-        0 1px 0 color-mix(in srgb, var(--wk-neutral-0) 16%, transparent),
-        0 10px 28px color-mix(in srgb, var(--wk-color-accent) 32%, transparent),
-        0 0 34px color-mix(in srgb, var(--wk-neutral-0) 18%, transparent);
+        0 2px 0 color-mix(in srgb, var(--wk-neutral-950) 48%, transparent),
+        0 12px 30px color-mix(in srgb, var(--wk-neutral-950) 66%, transparent),
+        0 0 30px color-mix(in srgb, var(--wk-color-accent) 22%, transparent);
     animation-delay: 900ms;
 }
 
@@ -685,9 +686,9 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
     font: var(--wk-text-h2);
     line-height: 1.24;
     text-shadow:
-        0 1px 0 color-mix(in srgb, var(--wk-neutral-0) 12%, transparent),
-        0 8px 24px color-mix(in srgb, var(--wk-color-accent) 26%, transparent),
-        0 0 28px color-mix(in srgb, var(--wk-neutral-0) 14%, transparent);
+        0 2px 0 color-mix(in srgb, var(--wk-neutral-950) 46%, transparent),
+        0 10px 26px color-mix(in srgb, var(--wk-neutral-950) 64%, transparent),
+        0 0 28px color-mix(in srgb, var(--wk-color-accent) 22%, transparent);
 }
 
 .wk-onboarding-intro-meaning-copy p {
@@ -697,7 +698,9 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
     font: var(--wk-text-body);
     font-weight: var(--wk-font-medium);
     line-height: var(--wk-leading-loose);
-    text-shadow: 0 8px 22px color-mix(in srgb, var(--wk-brand-primary) 36%, transparent);
+    text-shadow:
+        0 1px 0 color-mix(in srgb, var(--wk-neutral-950) 40%, transparent),
+        0 8px 20px color-mix(in srgb, var(--wk-neutral-950) 56%, transparent);
 }
 
 .wk-onboarding-intro-meaning-copy p span {
@@ -707,7 +710,10 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
     font-weight: var(--wk-font-bold);
     text-transform: uppercase;
     letter-spacing: 0;
-    text-shadow: 0 0 18px color-mix(in srgb, var(--wk-color-accent) 26%, transparent);
+    text-shadow:
+        0 1px 0 color-mix(in srgb, var(--wk-neutral-950) 48%, transparent),
+        0 8px 18px color-mix(in srgb, var(--wk-neutral-950) 52%, transparent),
+        0 0 20px color-mix(in srgb, var(--wk-color-accent) 24%, transparent);
 }
 
 .wk-onboarding-intro-actions {
