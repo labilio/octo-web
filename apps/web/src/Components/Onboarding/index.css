@@ -408,20 +408,54 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
     z-index: 5;
     pointer-events: none;
     opacity: 0;
-    background:
-        radial-gradient(ellipse 62% 42% at 50% 48%, rgba(28, 18, 58, 0.84), rgba(2, 2, 8, 0.96) 66%),
-        #020205;
-    transition: opacity 620ms cubic-bezier(0.22, 1, 0.36, 1);
+    overflow: hidden;
+    background: transparent;
     will-change: opacity;
+}
+
+.wk-onboarding-stage-fade::before,
+.wk-onboarding-stage-fade::after {
+    position: absolute;
+    right: 0;
+    left: 0;
+    height: 50%;
+    content: "";
+    background:
+        radial-gradient(ellipse 64% 78% at 50% var(--wk-curtain-glow-y), rgba(31, 24, 64, 0.88), rgba(2, 2, 8, 0.96) 68%),
+        #020205;
+    opacity: 0;
+    transform: translate3d(0, var(--wk-curtain-open-y), 0);
+    will-change: opacity, transform;
+}
+
+.wk-onboarding-stage-fade::before {
+    top: 0;
+    --wk-curtain-open-y: -102%;
+    --wk-curtain-glow-y: 100%;
+}
+
+.wk-onboarding-stage-fade::after {
+    bottom: 0;
+    --wk-curtain-open-y: 102%;
+    --wk-curtain-glow-y: 0%;
 }
 
 .wk-onboarding-intro.is-full-transition-out .wk-onboarding-stage-fade {
     opacity: 1;
-    animation: wkIntroStageGateIn 460ms cubic-bezier(0.42, 0, 0.18, 1) both;
 }
 
 .wk-onboarding-intro.is-full-transition-in .wk-onboarding-stage-fade {
-    animation: wkIntroStageGateOut 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    opacity: 1;
+}
+
+.wk-onboarding-intro.is-full-transition-out .wk-onboarding-stage-fade::before,
+.wk-onboarding-intro.is-full-transition-out .wk-onboarding-stage-fade::after {
+    animation: wkIntroCurtainClose 460ms cubic-bezier(0.42, 0, 0.18, 1) both;
+}
+
+.wk-onboarding-intro.is-full-transition-in .wk-onboarding-stage-fade::before,
+.wk-onboarding-intro.is-full-transition-in .wk-onboarding-stage-fade::after {
+    animation: wkIntroCurtainOpen 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .wk-onboarding-intro.is-full-transition-out .wk-onboarding-silk-canvas {
@@ -1051,35 +1085,31 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
     }
 }
 
-@keyframes wkIntroStageGateIn {
+@keyframes wkIntroCurtainClose {
     0% {
         opacity: 0;
-        clip-path: inset(47% 0 47% 0 round 38px);
-        filter: blur(10px);
-        transform: scaleX(0.92);
+        transform: translate3d(0, var(--wk-curtain-open-y), 0);
+    }
+
+    18% {
+        opacity: 1;
     }
 
     100% {
         opacity: 1;
-        clip-path: inset(0 0 0 0 round 0);
-        filter: blur(0);
-        transform: scaleX(1);
+        transform: translate3d(0, 0, 0);
     }
 }
 
-@keyframes wkIntroStageGateOut {
+@keyframes wkIntroCurtainOpen {
     0% {
         opacity: 1;
-        clip-path: inset(0 0 0 0 round 0);
-        filter: blur(0);
-        transform: scaleX(1);
+        transform: translate3d(0, 0, 0);
     }
 
     100% {
         opacity: 0;
-        clip-path: inset(44% 0 44% 0 round 42px);
-        filter: blur(12px);
-        transform: scaleX(1.08);
+        transform: translate3d(0, var(--wk-curtain-open-y), 0);
     }
 }
 
