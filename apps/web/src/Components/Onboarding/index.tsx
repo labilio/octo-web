@@ -1,5 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Building2, ExternalLink, Github, Sparkles, X } from "lucide-react";
+import {
+  Building2,
+  Check,
+  ExternalLink,
+  Github,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { useI18n, WKApp } from "@octo/base";
 import {
   createOnboardingSections,
@@ -12,7 +19,7 @@ import { runOnboardingViewTransition } from "./viewTransition";
 import "./index.css";
 
 const MAX_AI_AVATAR_NAME_LENGTH = 24;
-const COMPLETION_CELEBRATION_MS = 920;
+const COMPLETION_CELEBRATION_MS = 1180;
 const COMPLETION_REDUCED_MOTION_MS = 120;
 const BROWSER_EXTENSION_URL =
   "https://chromewebstore.google.com/detail/octo-%E6%8F%92%E4%BB%B6%E7%89%88/nemameogpfkponoomeblkjcnbidgmndk";
@@ -23,20 +30,18 @@ const CELEBRATION_COLORS = [
   "#10B981",
   "#F8FAFC",
 ] as const;
-const CELEBRATION_PARTICLES = Array.from({ length: 24 }, (_, index) => {
-  const lane = index % 12;
-  const side = index < 12 ? -1 : 1;
-  const spread = 28 + (lane % 4) * 7;
-  const rise = -30 + Math.floor(lane / 4) * 13;
+const CELEBRATION_PARTICLES = Array.from({ length: 46 }, (_, index) => {
+  const lane = index % 23;
+  const ring = Math.floor(index / 23);
+  const angle = (-168 + lane * 7.2) * (Math.PI / 180);
+  const distance = ring === 0 ? 110 + (lane % 4) * 12 : 154 + (lane % 5) * 14;
 
   return {
     id: index,
-    x: side < 0 ? "16%" : "84%",
-    y: `${50 + (lane % 4) * 4}%`,
-    tx: `${side * spread}vw`,
-    ty: `${rise}vh`,
-    rotate: `${side * (150 + lane * 17)}deg`,
-    delay: `${lane * 18}ms`,
+    tx: `${Math.round(Math.cos(angle) * distance)}px`,
+    ty: `${Math.round(Math.sin(angle) * distance)}px`,
+    rotate: `${ring === 0 ? 140 + lane * 17 : -120 - lane * 13}deg`,
+    delay: `${ring * 44 + lane * 11}ms`,
     color: CELEBRATION_COLORS[lane % CELEBRATION_COLORS.length],
   };
 });
@@ -87,6 +92,36 @@ function getCompletionCloseDelay() {
   return reduceMotion
     ? COMPLETION_REDUCED_MOTION_MS
     : COMPLETION_CELEBRATION_MS;
+}
+
+function getElementCenter(element: HTMLElement | null) {
+  if (element) {
+    const rect = element.getBoundingClientRect();
+
+    return {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    };
+  }
+
+  return {
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2,
+  };
+}
+
+function getCompletionOrigin(
+  event?: React.MouseEvent<HTMLButtonElement>,
+  fallbackElement?: HTMLButtonElement | null
+) {
+  if (event && (event.clientX > 0 || event.clientY > 0)) {
+    return {
+      x: event.clientX,
+      y: event.clientY,
+    };
+  }
+
+  return getElementCenter(event?.currentTarget || fallbackElement || null);
 }
 
 function ImageVisual({ section }: { section: OnboardingSection }) {
@@ -168,6 +203,10 @@ export const Onboarding: React.FC = () => {
   const onboardingSections = useMemo(() => createOnboardingSections(t), [t]);
   const [activeId, setActiveId] =
     useState<OnboardingSectionId>("workspace-map");
+  const [completionOrigin, setCompletionOrigin] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [aiAvatarName, setAiAvatarName] = useState(() => {
     return localStorage.getItem(aiAvatarNameStorageKey) || "";
   });
@@ -185,6 +224,7 @@ export const Onboarding: React.FC = () => {
   });
   const [introLeaving, setIntroLeaving] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const finishButtonRef = useRef<HTMLButtonElement | null>(null);
   const completionStartedRef = useRef(false);
   const completionTimerRef = useRef<number | null>(null);
 
@@ -222,10 +262,11 @@ export const Onboarding: React.FC = () => {
     setVisible(false);
   };
 
-  const handleFinish = () => {
+  const handleFinish = (event?: React.MouseEvent<HTMLButtonElement>) => {
     if (completionStartedRef.current || !finalAiAvatarName) return;
 
     completionStartedRef.current = true;
+    setCompletionOrigin(getCompletionOrigin(event, finishButtonRef.current));
     localStorage.setItem(aiAvatarNameStorageKey, finalAiAvatarName);
     persistDismissed();
     setIsCompleting(true);
@@ -287,14 +328,23 @@ export const Onboarding: React.FC = () => {
       aria-labelledby="wk-onboarding-title"
     >
       {isCompleting ? (
-        <div className="wk-onboarding-celebration" aria-hidden="true">
+        <div
+          className="wk-onboarding-celebration"
+          aria-hidden="true"
+          style={
+            completionOrigin
+              ? ({
+                  "--wk-celebration-x": `${completionOrigin.x}px`,
+                  "--wk-celebration-y": `${completionOrigin.y}px`,
+                } as React.CSSProperties)
+              : undefined
+          }
+        >
           {CELEBRATION_PARTICLES.map((particle) => (
             <span
               key={particle.id}
               style={
                 {
-                  "--wk-particle-x": particle.x,
-                  "--wk-particle-y": particle.y,
                   "--wk-particle-tx": particle.tx,
                   "--wk-particle-ty": particle.ty,
                   "--wk-particle-rotate": particle.rotate,
@@ -432,9 +482,22 @@ export const Onboarding: React.FC = () => {
           {isAiAvatarSection(activeSection) ? (
             <div className="wk-onboarding-finish-row">
               <OnboardingHoverButton
-                className="wk-onboarding-finish-button"
-                text={t("app.onboarding.sections.aiAvatar.enableAction")}
-                icon={<Sparkles size={15} aria-hidden="true" />}
+                ref={finishButtonRef}
+                className={`wk-onboarding-finish-button${
+                  isCompleting ? " is-complete" : ""
+                }`}
+                text={
+                  isCompleting
+                    ? t("app.onboarding.sections.aiAvatar.completionStatus")
+                    : t("app.onboarding.sections.aiAvatar.enableAction")
+                }
+                icon={
+                  isCompleting ? (
+                    <Check size={15} aria-hidden="true" />
+                  ) : (
+                    <Sparkles size={15} aria-hidden="true" />
+                  )
+                }
                 variant="brand"
                 onClick={handleFinish}
                 disabled={!finalAiAvatarName || isCompleting}
