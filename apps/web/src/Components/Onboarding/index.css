@@ -450,12 +450,12 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
 
 .wk-onboarding-intro.is-full-transition-out .wk-onboarding-stage-fade::before,
 .wk-onboarding-intro.is-full-transition-out .wk-onboarding-stage-fade::after {
-    animation: wkIntroCurtainClose 880ms linear both;
+    animation: wkIntroCurtainClose 440ms linear both;
 }
 
 .wk-onboarding-intro.is-full-transition-in .wk-onboarding-stage-fade::before,
 .wk-onboarding-intro.is-full-transition-in .wk-onboarding-stage-fade::after {
-    animation: wkIntroCurtainOpen 1080ms linear both;
+    animation: wkIntroCurtainOpen 540ms linear both;
 }
 
 .wk-onboarding-intro.is-full-transition-out .wk-onboarding-silk-canvas {

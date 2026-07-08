@@ -12,8 +12,8 @@ const logoSrc = new URL("./assets/octo-logo-white-symbol.png", import.meta.url)
 
 const narrativeDurations = [2150, 2150, 2900];
 const CONTENT_TRANSITION_MS = 280;
-const FULL_TRANSITION_OUT_MS = 880;
-const FULL_TRANSITION_IN_MS = 1080;
+const FULL_TRANSITION_OUT_MS = 440;
+const FULL_TRANSITION_IN_MS = 540;
 
 const silkBackdropSettings = {
   opening: {
