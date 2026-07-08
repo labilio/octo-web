@@ -11,6 +11,16 @@ type SilkBackgroundProps = {
     textureScale?: number;
 };
 
+type SilkRenderSettings = {
+    brightness: number;
+    damping: number;
+    hue: number;
+    mouseSensitivity: number;
+    saturation: number;
+    speed: number;
+    textureScale: number;
+};
+
 const vertexShaderSource = `
 attribute vec2 a_position;
 
@@ -162,6 +172,36 @@ const SilkBackground: React.FC<SilkBackgroundProps> = ({
     textureScale = 1,
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const targetSettingsRef = useRef<SilkRenderSettings>({
+        brightness,
+        damping,
+        hue,
+        mouseSensitivity,
+        saturation,
+        speed,
+        textureScale,
+    });
+    const renderSettingsRef = useRef<SilkRenderSettings>({
+        brightness,
+        damping,
+        hue,
+        mouseSensitivity,
+        saturation,
+        speed,
+        textureScale,
+    });
+
+    useEffect(() => {
+        targetSettingsRef.current = {
+            brightness,
+            damping,
+            hue,
+            mouseSensitivity,
+            saturation,
+            speed,
+            textureScale,
+        };
+    }, [brightness, damping, hue, mouseSensitivity, saturation, speed, textureScale]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -195,7 +235,8 @@ const SilkBackground: React.FC<SilkBackgroundProps> = ({
         let frameId = 0;
         let width = 0;
         let height = 0;
-        const start = performance.now();
+        let lastFrameTime = performance.now();
+        let shaderTime = 0;
         const pointer = { x: 0, y: 0, active: 0 };
         const smoothPointer = { x: 0, y: 0, active: 0 };
 
@@ -221,7 +262,7 @@ const SilkBackground: React.FC<SilkBackgroundProps> = ({
 
             pointer.x = (event.clientX - rect.left) * (canvas.width / Math.max(rect.width, 1));
             pointer.y = canvas.height - (event.clientY - rect.top) * (canvas.height / Math.max(rect.height, 1));
-            pointer.active = 2 * mouseSensitivity;
+            pointer.active = 2 * targetSettingsRef.current.mouseSensitivity;
         };
 
         const handlePointerLeave = () => {
@@ -229,11 +270,23 @@ const SilkBackground: React.FC<SilkBackgroundProps> = ({
         };
 
         const render = (now: number) => {
-            const elapsed = ((now - start) / 1000) * speed;
+            const targetSettings = targetSettingsRef.current;
+            const renderSettings = renderSettingsRef.current;
+            const easing = 0.055;
+            const delta = Math.min(0.05, Math.max(0, (now - lastFrameTime) / 1000));
 
-            smoothPointer.x += (pointer.x - smoothPointer.x) * damping;
-            smoothPointer.y += (pointer.y - smoothPointer.y) * damping;
-            smoothPointer.active += (pointer.active - smoothPointer.active) * damping;
+            lastFrameTime = now;
+            renderSettings.hue += (targetSettings.hue - renderSettings.hue) * easing;
+            renderSettings.saturation += (targetSettings.saturation - renderSettings.saturation) * easing;
+            renderSettings.brightness += (targetSettings.brightness - renderSettings.brightness) * easing;
+            renderSettings.textureScale += (targetSettings.textureScale - renderSettings.textureScale) * easing;
+            renderSettings.speed += (targetSettings.speed - renderSettings.speed) * easing;
+            renderSettings.damping += (targetSettings.damping - renderSettings.damping) * easing;
+            shaderTime += delta * renderSettings.speed;
+
+            smoothPointer.x += (pointer.x - smoothPointer.x) * renderSettings.damping;
+            smoothPointer.y += (pointer.y - smoothPointer.y) * renderSettings.damping;
+            smoothPointer.active += (pointer.active - smoothPointer.active) * renderSettings.damping;
 
             gl.useProgram(program);
             gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -241,12 +294,12 @@ const SilkBackground: React.FC<SilkBackgroundProps> = ({
             gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
             gl.uniform3f(resolutionLocation, width, height, 1);
-            gl.uniform1f(timeLocation, elapsed);
+            gl.uniform1f(timeLocation, shaderTime);
             gl.uniform4f(mouseLocation, smoothPointer.x, smoothPointer.y, smoothPointer.active, 0);
-            gl.uniform1f(hueLocation, hue);
-            gl.uniform1f(saturationLocation, saturation);
-            gl.uniform1f(brightnessLocation, brightness);
-            gl.uniform1f(textureScaleLocation, textureScale);
+            gl.uniform1f(hueLocation, renderSettings.hue);
+            gl.uniform1f(saturationLocation, renderSettings.saturation);
+            gl.uniform1f(brightnessLocation, renderSettings.brightness);
+            gl.uniform1f(textureScaleLocation, renderSettings.textureScale);
 
             gl.drawArrays(gl.TRIANGLES, 0, 6);
             frameId = requestAnimationFrame(render);
@@ -268,7 +321,7 @@ const SilkBackground: React.FC<SilkBackgroundProps> = ({
             gl.deleteBuffer(positionBuffer);
             gl.deleteProgram(program);
         };
-    }, [brightness, damping, hue, mouseSensitivity, saturation, speed, textureScale]);
+    }, []);
 
     return <canvas ref={canvasRef} className={className} aria-hidden="true" />;
 };
