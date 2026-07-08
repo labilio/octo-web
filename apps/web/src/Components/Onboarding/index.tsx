@@ -159,7 +159,7 @@ function IdentitySetupVisual({
 }
 
 export const Onboarding: React.FC = () => {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const storageKey = useMemo(() => getStorageKey(), []);
   const introStorageKey = useMemo(() => getIntroStorageKey(), []);
   const aiAvatarNameStorageKey = useMemo(() => getAiAvatarNameStorageKey(), []);
@@ -355,7 +355,11 @@ export const Onboarding: React.FC = () => {
             </a>
             <a
               className="wk-onboarding-open-source"
-              href="https://www.mininglamp.com/about/"
+              href={
+                locale === "en-US"
+                  ? "https://www.mininglamp.com/en/about/"
+                  : "https://www.mininglamp.com/about/"
+              }
               target="_blank"
               rel="noreferrer"
             >
