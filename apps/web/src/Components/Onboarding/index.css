@@ -844,7 +844,6 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 18px;
     width: 100%;
     margin: 0;
     color: #fff;
@@ -881,6 +880,7 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
 
 .wk-onboarding-narrative-emoji {
     display: inline-block;
+    margin-left: 18px;
     font-size: 48px;
     line-height: 1;
     filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.28));
@@ -1770,6 +1770,14 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
 .wk-onboarding-hover-button-text {
     position: relative;
     z-index: 1;
+}
+
+@media (min-width: 880px) {
+    .wk-onboarding-narrative-copy h2.has-emoji::before {
+        flex: 0 0 90px;
+        width: 90px;
+        content: "";
+    }
 }
 
 @media (max-width: 820px) {

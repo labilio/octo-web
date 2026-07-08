@@ -102,7 +102,7 @@ const NarrativeRail: React.FC<NarrativeRailProps> = ({ items, durations = defaul
 
     const renderTitle = (item: NarrativeItem, phase: "active" | "exiting", index: number) => (
         <div className={`wk-onboarding-narrative-copy is-${phase}`} key={`${phase}-${index}`}>
-            <h2>
+            <h2 className={item.emoji ? "has-emoji" : undefined}>
                 <span className="wk-onboarding-narrative-title">
                     {Array.from(item.title).map((char, charIndex) => (
                         <span
