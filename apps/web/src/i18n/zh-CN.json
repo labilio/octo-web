@@ -89,6 +89,7 @@
   "onboarding.links.aboutMininglamp": "关于明略",
   "onboarding.links.openSource": "开源地址",
   "onboarding.nav.welcome": "Welcome!",
+  "onboarding.sections.aiAvatar.completionStatus": "AI 分身已启用",
   "onboarding.sections.aiAvatar.description": "为自己创建一个职场 AI 分身，让它带着你的上下文、判断标准和工作方式参与协作。",
   "onboarding.sections.aiAvatar.enableAction": "启用 AI 分身",
   "onboarding.sections.aiAvatar.label": "AI 分身",

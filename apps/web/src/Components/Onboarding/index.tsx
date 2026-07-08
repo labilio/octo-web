@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Building2, ExternalLink, Github, Sparkles, X } from "lucide-react";
 import { useI18n, WKApp } from "@octo/base";
 import {
@@ -12,8 +12,34 @@ import { runOnboardingViewTransition } from "./viewTransition";
 import "./index.css";
 
 const MAX_AI_AVATAR_NAME_LENGTH = 24;
+const COMPLETION_CELEBRATION_MS = 920;
+const COMPLETION_REDUCED_MOTION_MS = 120;
 const BROWSER_EXTENSION_URL =
   "https://chromewebstore.google.com/detail/octo-%E6%8F%92%E4%BB%B6%E7%89%88/nemameogpfkponoomeblkjcnbidgmndk";
+const CELEBRATION_COLORS = [
+  "#7C3AED",
+  "#06B6D4",
+  "#F59E0B",
+  "#10B981",
+  "#F8FAFC",
+] as const;
+const CELEBRATION_PARTICLES = Array.from({ length: 24 }, (_, index) => {
+  const lane = index % 12;
+  const side = index < 12 ? -1 : 1;
+  const spread = 28 + (lane % 4) * 7;
+  const rise = -30 + Math.floor(lane / 4) * 13;
+
+  return {
+    id: index,
+    x: side < 0 ? "16%" : "84%",
+    y: `${50 + (lane % 4) * 4}%`,
+    tx: `${side * spread}vw`,
+    ty: `${rise}vh`,
+    rotate: `${side * (150 + lane * 17)}deg`,
+    delay: `${lane * 18}ms`,
+    color: CELEBRATION_COLORS[lane % CELEBRATION_COLORS.length],
+  };
+});
 
 type OnboardingSectionId = OnboardingSection["id"];
 
@@ -52,6 +78,15 @@ function isPreviewMode() {
 
 function isIntroPreviewMode() {
   return new URLSearchParams(window.location.search).get("intro") === "1";
+}
+
+function getCompletionCloseDelay() {
+  const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")
+    .matches;
+
+  return reduceMotion
+    ? COMPLETION_REDUCED_MOTION_MS
+    : COMPLETION_CELEBRATION_MS;
 }
 
 function ImageVisual({ section }: { section: OnboardingSection }) {
@@ -149,7 +184,9 @@ export const Onboarding: React.FC = () => {
     return localStorage.getItem(introStorageKey) !== "seen";
   });
   const [introLeaving, setIntroLeaving] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const completionStartedRef = useRef(false);
+  const completionTimerRef = useRef<number | null>(null);
 
   const activeSection =
     onboardingSections.find((section) => section.id === activeId) ||
@@ -157,6 +194,14 @@ export const Onboarding: React.FC = () => {
   const isFinalSection =
     activeSection.id === onboardingSections[onboardingSections.length - 1].id;
   const finalAiAvatarName = normalizeAiAvatarName(aiAvatarName);
+
+  useEffect(() => {
+    return () => {
+      if (completionTimerRef.current !== null) {
+        window.clearTimeout(completionTimerRef.current);
+      }
+    };
+  }, []);
 
   const persistDismissed = () => {
     if (!previewMode) {
@@ -166,6 +211,8 @@ export const Onboarding: React.FC = () => {
   };
 
   const handleClose = () => {
+    if (isCompleting) return;
+
     if (isFinalSection && finalAiAvatarName) {
       handleFinish();
       return;
@@ -181,8 +228,12 @@ export const Onboarding: React.FC = () => {
     completionStartedRef.current = true;
     localStorage.setItem(aiAvatarNameStorageKey, finalAiAvatarName);
     persistDismissed();
-    setVisible(false);
+    setIsCompleting(true);
     WKApp.mittBus.emit("onboarding-ai-avatar-created" as any);
+    completionTimerRef.current = window.setTimeout(() => {
+      completionTimerRef.current = null;
+      setVisible(false);
+    }, getCompletionCloseDelay());
   };
 
   const handleIntroContinue = () => {
@@ -228,11 +279,38 @@ export const Onboarding: React.FC = () => {
 
   return (
     <div
-      className="wk-onboarding-overlay wk-onboarding-overlay-panel"
+      className={`wk-onboarding-overlay wk-onboarding-overlay-panel${
+        isCompleting ? " is-completing" : ""
+      }`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="wk-onboarding-title"
     >
+      {isCompleting ? (
+        <div className="wk-onboarding-celebration" aria-hidden="true">
+          {CELEBRATION_PARTICLES.map((particle) => (
+            <span
+              key={particle.id}
+              style={
+                {
+                  "--wk-particle-x": particle.x,
+                  "--wk-particle-y": particle.y,
+                  "--wk-particle-tx": particle.tx,
+                  "--wk-particle-ty": particle.ty,
+                  "--wk-particle-rotate": particle.rotate,
+                  "--wk-particle-delay": particle.delay,
+                  "--wk-particle-color": particle.color,
+                } as React.CSSProperties
+              }
+            />
+          ))}
+        </div>
+      ) : null}
+      <span className="wk-onboarding-sr-only" role="status" aria-live="polite">
+        {isCompleting
+          ? t("app.onboarding.sections.aiAvatar.completionStatus")
+          : ""}
+      </span>
       <section className="wk-onboarding-panel">
         <aside
           className="wk-onboarding-nav"
@@ -355,7 +433,7 @@ export const Onboarding: React.FC = () => {
                 icon={<Sparkles size={15} aria-hidden="true" />}
                 variant="brand"
                 onClick={handleFinish}
-                disabled={!finalAiAvatarName}
+                disabled={!finalAiAvatarName || isCompleting}
               />
             </div>
           ) : null}

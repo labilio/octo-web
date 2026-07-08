@@ -89,6 +89,7 @@
   "onboarding.links.aboutMininglamp": "About Mininglamp",
   "onboarding.links.openSource": "Open source",
   "onboarding.nav.welcome": "Welcome!",
+  "onboarding.sections.aiAvatar.completionStatus": "AI Agent enabled",
   "onboarding.sections.aiAvatar.description": "Create your workplace AI Agent, trained by your instructions and ready to work your way in shared channels.",
   "onboarding.sections.aiAvatar.enableAction": "Enable AI Agent",
   "onboarding.sections.aiAvatar.label": "AI Agent",
