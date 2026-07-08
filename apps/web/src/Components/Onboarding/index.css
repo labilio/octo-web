@@ -422,11 +422,12 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
     content: "";
     background:
         radial-gradient(ellipse 74% 82% at 50% var(--wk-curtain-glow-y), rgba(61, 48, 104, 0.34), transparent 68%),
-        linear-gradient(90deg, rgba(2, 2, 8, 0.98) 0%, rgba(17, 13, 38, 0.94) 24%, rgba(38, 28, 72, 0.9) 50%, rgba(17, 13, 38, 0.94) 76%, rgba(2, 2, 8, 0.98) 100%),
-        repeating-linear-gradient(90deg, rgba(226, 219, 255, 0.035) 0 1px, transparent 1px 15px),
-        linear-gradient(var(--wk-curtain-depth-direction), rgba(255, 255, 255, 0.035), transparent 28%, rgba(0, 0, 0, 0.28) 100%),
-        #020205;
+        linear-gradient(90deg, rgba(2, 2, 8, 0.92) 0%, rgba(17, 13, 38, 0.84) 24%, rgba(46, 35, 84, 0.74) 50%, rgba(17, 13, 38, 0.84) 76%, rgba(2, 2, 8, 0.92) 100%),
+        repeating-linear-gradient(90deg, rgba(226, 219, 255, 0.045) 0 1px, transparent 1px 15px),
+        linear-gradient(var(--wk-curtain-depth-direction), rgba(255, 255, 255, 0.07), transparent 24%, rgba(0, 0, 0, 0.34) 100%),
+        rgba(2, 2, 5, 0.82);
     background-blend-mode: screen, normal, screen, normal, normal;
+    backdrop-filter: blur(12px) saturate(1.18) contrast(1.05);
     box-shadow: var(--wk-curtain-edge-shadow);
     opacity: 0;
     transform: translate3d(0, var(--wk-curtain-open-y), 0);
@@ -463,12 +464,12 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
 
 .wk-onboarding-intro.is-full-transition-out .wk-onboarding-stage-fade::before,
 .wk-onboarding-intro.is-full-transition-out .wk-onboarding-stage-fade::after {
-    animation: wkIntroCurtainClose 440ms linear both;
+    animation: wkIntroCurtainClose 380ms linear both;
 }
 
 .wk-onboarding-intro.is-full-transition-in .wk-onboarding-stage-fade::before,
 .wk-onboarding-intro.is-full-transition-in .wk-onboarding-stage-fade::after {
-    animation: wkIntroCurtainOpen 540ms linear both;
+    animation: wkIntroCurtainOpen 460ms linear both;
 }
 
 .wk-onboarding-intro.is-full-transition-out .wk-onboarding-silk-canvas {
@@ -773,7 +774,10 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
     filter: blur(6px);
     pointer-events: none;
     transform: translateY(8px) scale(0.995);
-    animation: wkSilkStageIn 1080ms cubic-bezier(0.19, 1, 0.22, 1) 180ms forwards;
+}
+
+.wk-onboarding-intro.is-silk.is-silk-revealed .wk-onboarding-silk-stage {
+    animation: wkSilkStageIn 1080ms cubic-bezier(0.19, 1, 0.22, 1) forwards;
 }
 
 .wk-onboarding-silk-kicker {

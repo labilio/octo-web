@@ -12,8 +12,9 @@ const logoSrc = new URL("./assets/octo-logo-white-symbol.png", import.meta.url)
 
 const narrativeDurations = [2150, 2150, 2900];
 const CONTENT_TRANSITION_MS = 280;
-const FULL_TRANSITION_OUT_MS = 440;
-const FULL_TRANSITION_IN_MS = 540;
+const FULL_TRANSITION_OUT_MS = 380;
+const FULL_TRANSITION_IN_MS = 460;
+const SILK_REVEAL_PAUSE_MS = 160;
 
 const silkBackdropSettings = {
   opening: {
@@ -62,6 +63,7 @@ export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({
     useState<PhaseTransitionMode>("none");
   const [fullTransitionStage, setFullTransitionStage] =
     useState<FullTransitionStage>("idle");
+  const [isSilkRevealed, setIsSilkRevealed] = useState(false);
   const [activeMeaningIndex, setActiveMeaningIndex] = useState(0);
   const transitionTimerRefs = useRef<number[]>([]);
   const octoMeanings = useMemo(
@@ -121,6 +123,7 @@ export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({
     clearTransitionTimers();
 
     if (nextPhase === "silk") {
+      setIsSilkRevealed(false);
       setPhaseTransitionMode("full");
       setFullTransitionStage("out");
 
@@ -132,13 +135,18 @@ export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({
       const doneTimer = window.setTimeout(() => {
         setPhaseTransitionMode("none");
         setFullTransitionStage("idle");
-        transitionTimerRefs.current = [];
       }, FULL_TRANSITION_OUT_MS + FULL_TRANSITION_IN_MS);
 
-      transitionTimerRefs.current = [swapTimer, doneTimer];
+      const revealTimer = window.setTimeout(() => {
+        setIsSilkRevealed(true);
+        transitionTimerRefs.current = [];
+      }, FULL_TRANSITION_OUT_MS + FULL_TRANSITION_IN_MS + SILK_REVEAL_PAUSE_MS);
+
+      transitionTimerRefs.current = [swapTimer, doneTimer, revealTimer];
       return;
     }
 
+    setIsSilkRevealed(false);
     setPhaseTransitionMode("content");
 
     const timer = window.setTimeout(() => {
@@ -151,14 +159,14 @@ export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({
   };
 
   useEffect(() => {
-    if (phase !== "silk") return;
+    if (phase !== "silk" || !isSilkRevealed) return;
 
     const timer = window.setTimeout(() => {
       onContinue();
     }, 7200);
 
     return () => window.clearTimeout(timer);
-  }, [onContinue, phase]);
+  }, [isSilkRevealed, onContinue, phase]);
 
   useEffect(() => {
     return () => {
@@ -174,7 +182,7 @@ export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({
         fullTransitionStage !== "idle"
           ? ` is-full-transition-${fullTransitionStage}`
           : ""
-      }`}
+      }${isSilkRevealed ? " is-silk-revealed" : ""}`}
       role="presentation"
     >
       <SilkBackground
@@ -248,10 +256,12 @@ export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({
           </div>
         ) : (
           <div className="wk-onboarding-silk-stage" aria-live="polite">
-            <NarrativeRail
-              items={narrativeItems}
-              durations={narrativeDurations}
-            />
+            {isSilkRevealed ? (
+              <NarrativeRail
+                items={narrativeItems}
+                durations={narrativeDurations}
+              />
+            ) : null}
           </div>
         )}
       </div>
