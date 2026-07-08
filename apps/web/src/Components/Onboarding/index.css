@@ -607,18 +607,25 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
 
 .wk-onboarding-intro-copy h1 {
     max-width: 620px;
-    color: #ffffff;
+    color: var(--wk-neutral-0);
     font: var(--wk-text-h1);
+    font-size: 30px;
+    line-height: 1.22;
     letter-spacing: 0;
+    text-shadow:
+        0 1px 0 color-mix(in srgb, var(--wk-neutral-0) 16%, transparent),
+        0 10px 28px color-mix(in srgb, var(--wk-color-accent) 32%, transparent),
+        0 0 34px color-mix(in srgb, var(--wk-neutral-0) 18%, transparent);
     animation-delay: 900ms;
 }
 
 .wk-onboarding-intro-copy p {
     max-width: 560px;
-    color: rgba(255, 255, 255, 0.78);
+    color: color-mix(in srgb, var(--wk-neutral-0) 70%, transparent);
     font-size: var(--wk-text-size-lg);
-    font-weight: var(--wk-font-regular);
+    font-weight: var(--wk-font-medium);
     line-height: var(--wk-leading-loose);
+    text-shadow: 0 8px 24px color-mix(in srgb, var(--wk-brand-primary) 42%, transparent);
     animation-delay: 1320ms;
 }
 
@@ -674,25 +681,33 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
 }
 
 .wk-onboarding-intro-meaning-copy strong {
-    color: #ffffff;
+    color: var(--wk-neutral-0);
     font: var(--wk-text-h2);
+    line-height: 1.24;
+    text-shadow:
+        0 1px 0 color-mix(in srgb, var(--wk-neutral-0) 12%, transparent),
+        0 8px 24px color-mix(in srgb, var(--wk-color-accent) 26%, transparent),
+        0 0 28px color-mix(in srgb, var(--wk-neutral-0) 14%, transparent);
 }
 
 .wk-onboarding-intro-meaning-copy p {
     max-width: 480px;
     margin: 0;
-    color: rgba(255, 255, 255, 0.68);
+    color: color-mix(in srgb, var(--wk-neutral-0) 66%, transparent);
     font: var(--wk-text-body);
+    font-weight: var(--wk-font-medium);
     line-height: var(--wk-leading-loose);
+    text-shadow: 0 8px 22px color-mix(in srgb, var(--wk-brand-primary) 36%, transparent);
 }
 
 .wk-onboarding-intro-meaning-copy p span {
     margin-right: var(--wk-sp-3);
-    color: rgba(167, 139, 250, 0.74);
+    color: color-mix(in srgb, var(--wk-color-accent) 74%, var(--wk-neutral-0));
     font: var(--wk-text-caption);
     font-weight: var(--wk-font-bold);
     text-transform: uppercase;
     letter-spacing: 0;
+    text-shadow: 0 0 18px color-mix(in srgb, var(--wk-color-accent) 26%, transparent);
 }
 
 .wk-onboarding-intro-actions {
