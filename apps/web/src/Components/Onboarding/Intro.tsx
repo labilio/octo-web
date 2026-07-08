@@ -12,9 +12,8 @@ const logoSrc = new URL("./assets/octo-logo-white-symbol.png", import.meta.url)
 
 const narrativeDurations = [2150, 2150, 2900];
 const CONTENT_TRANSITION_MS = 280;
-const FULL_TRANSITION_OUT_MS = 380;
-const FULL_TRANSITION_IN_MS = 460;
-const SILK_REVEAL_PAUSE_MS = 160;
+const SILK_SHIFT_OUT_MS = 260;
+const SILK_SHIFT_REVEAL_MS = 560;
 
 const silkBackdropSettings = {
   opening: {
@@ -51,8 +50,7 @@ type OnboardingIntroProps = {
 };
 
 type IntroPhase = "opening" | "meaning" | "silk";
-type PhaseTransitionMode = "none" | "content" | "full";
-type FullTransitionStage = "idle" | "out" | "in";
+type PhaseTransitionMode = "none" | "content" | "silkShift";
 
 export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({
   onContinue,
@@ -61,8 +59,6 @@ export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({
   const [phase, setPhase] = useState<IntroPhase>("opening");
   const [phaseTransitionMode, setPhaseTransitionMode] =
     useState<PhaseTransitionMode>("none");
-  const [fullTransitionStage, setFullTransitionStage] =
-    useState<FullTransitionStage>("idle");
   const [isSilkRevealed, setIsSilkRevealed] = useState(false);
   const [activeMeaningIndex, setActiveMeaningIndex] = useState(0);
   const transitionTimerRefs = useRef<number[]>([]);
@@ -124,25 +120,19 @@ export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({
 
     if (nextPhase === "silk") {
       setIsSilkRevealed(false);
-      setPhaseTransitionMode("full");
-      setFullTransitionStage("out");
+      setPhaseTransitionMode("silkShift");
 
       const swapTimer = window.setTimeout(() => {
         setPhase(nextPhase);
-        setFullTransitionStage("in");
-      }, FULL_TRANSITION_OUT_MS);
-
-      const doneTimer = window.setTimeout(() => {
-        setPhaseTransitionMode("none");
-        setFullTransitionStage("idle");
-      }, FULL_TRANSITION_OUT_MS + FULL_TRANSITION_IN_MS);
+      }, SILK_SHIFT_OUT_MS);
 
       const revealTimer = window.setTimeout(() => {
+        setPhaseTransitionMode("none");
         setIsSilkRevealed(true);
         transitionTimerRefs.current = [];
-      }, FULL_TRANSITION_OUT_MS + FULL_TRANSITION_IN_MS + SILK_REVEAL_PAUSE_MS);
+      }, SILK_SHIFT_OUT_MS + SILK_SHIFT_REVEAL_MS);
 
-      transitionTimerRefs.current = [swapTimer, doneTimer, revealTimer];
+      transitionTimerRefs.current = [swapTimer, revealTimer];
       return;
     }
 
@@ -178,9 +168,9 @@ export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({
     <div
       className={`wk-onboarding-intro is-${phase} has-custom-cursor${
         phaseTransitionMode !== "none" ? " is-phase-transitioning" : ""
-      }${phaseTransitionMode === "full" ? " is-full-phase-transitioning" : ""}${
-        fullTransitionStage !== "idle"
-          ? ` is-full-transition-${fullTransitionStage}`
+      }${
+        phaseTransitionMode === "silkShift"
+          ? " is-silk-shift-transitioning"
           : ""
       }${isSilkRevealed ? " is-silk-revealed" : ""}`}
       role="presentation"
@@ -190,7 +180,6 @@ export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({
         {...silkBackdrop}
       />
       <div className="wk-onboarding-intro-atmosphere" aria-hidden="true" />
-      <div className="wk-onboarding-stage-fade" aria-hidden="true" />
 
       <div className="wk-onboarding-intro-logo-anchor">
         <div
