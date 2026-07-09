@@ -72,6 +72,8 @@
   "onboarding.dialog.introAria": "Octo onboarding 介绍",
   "onboarding.dialog.sectionsAria": "Onboarding 章节",
   "onboarding.intro.actions.enter": "进入引导",
+  "onboarding.intro.actions.skip": "跳过",
+  "onboarding.intro.actions.skipAria": "跳过引导，进入主页面",
   "onboarding.intro.actions.start": "开始了解",
   "onboarding.intro.hero.subtitle": "让人和 AI 在同一个上下文里工作",
   "onboarding.intro.hero.title": "Octo 为人与 AI 协作而生",

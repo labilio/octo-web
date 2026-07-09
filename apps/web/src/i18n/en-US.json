@@ -72,6 +72,8 @@
   "onboarding.dialog.introAria": "Octo onboarding introduction",
   "onboarding.dialog.sectionsAria": "Onboarding sections",
   "onboarding.intro.actions.enter": "Enter guide",
+  "onboarding.intro.actions.skip": "Skip",
+  "onboarding.intro.actions.skipAria": "Skip onboarding and enter the main page",
   "onboarding.intro.actions.start": "Start exploring",
   "onboarding.intro.hero.subtitle": "Where humans and AI Agents work as one team",
   "onboarding.intro.hero.title": "Octo is an AI-native collaboration platform",

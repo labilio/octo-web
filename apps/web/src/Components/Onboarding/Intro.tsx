@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { X } from "lucide-react";
 import { useI18n } from "@octo/base";
 import { OnboardingHoverButton } from "./HoverButton";
 import NarrativeRail from "./NarrativeRail";
@@ -47,6 +48,7 @@ const silkBackdropSettings = {
 
 type OnboardingIntroProps = {
   onContinue: () => void;
+  onSkip: () => void;
 };
 
 type IntroPhase = "opening" | "meaning" | "silk";
@@ -54,6 +56,7 @@ type PhaseTransitionMode = "none" | "content" | "silkShift";
 
 export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({
   onContinue,
+  onSkip,
 }) => {
   const { t } = useI18n();
   const [phase, setPhase] = useState<IntroPhase>("opening");
@@ -180,6 +183,16 @@ export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({
         {...silkBackdrop}
       />
       <div className="wk-onboarding-intro-atmosphere" aria-hidden="true" />
+      <button
+        className="wk-onboarding-intro-skip"
+        type="button"
+        onClick={onSkip}
+        aria-label={t("app.onboarding.intro.actions.skipAria")}
+        data-cursor-interactive="true"
+      >
+        <span>{t("app.onboarding.intro.actions.skip")}</span>
+        <X size={15} aria-hidden="true" />
+      </button>
 
       <div className="wk-onboarding-intro-logo-anchor">
         <div

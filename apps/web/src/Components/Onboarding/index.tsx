@@ -299,6 +299,25 @@ export const Onboarding: React.FC = () => {
     }, 620);
   };
 
+  const handleIntroSkip = () => {
+    if (introLeaving) return;
+
+    const closeIntro = () => {
+      persistDismissed();
+      setVisible(false);
+      setIntroLeaving(false);
+    };
+
+    const transitioned = runOnboardingViewTransition({
+      duration: 1240,
+      onTransition: closeIntro,
+    });
+    if (transitioned) return;
+
+    setIntroLeaving(true);
+    window.setTimeout(closeIntro, 620);
+  };
+
   if (!visible) {
     return null;
   }
@@ -313,7 +332,10 @@ export const Onboarding: React.FC = () => {
         aria-modal="true"
         aria-label={t("app.onboarding.dialog.introAria")}
       >
-        <OnboardingIntro onContinue={handleIntroContinue} />
+        <OnboardingIntro
+          onContinue={handleIntroContinue}
+          onSkip={handleIntroSkip}
+        />
       </div>
     );
   }

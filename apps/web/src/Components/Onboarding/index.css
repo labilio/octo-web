@@ -414,6 +414,47 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
     animation: wkIntroAtmosphereDrift 9200ms ease-in-out infinite alternate;
 }
 
+.wk-onboarding-intro-skip {
+    position: absolute;
+    top: clamp(18px, 3.5vh, 34px);
+    right: clamp(18px, 4vw, 44px);
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid rgba(248, 250, 252, 0.18);
+    border-radius: var(--wk-r-full);
+    background: rgba(6, 8, 18, 0.28);
+    color: rgba(248, 250, 252, 0.78);
+    box-shadow:
+        0 12px 34px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    font: var(--wk-text-small);
+    font-weight: 650;
+    backdrop-filter: blur(16px);
+    cursor: pointer;
+    transition:
+        border-color 180ms var(--wk-ease),
+        background 180ms var(--wk-ease),
+        color 180ms var(--wk-ease),
+        transform 180ms var(--wk-ease);
+}
+
+.wk-onboarding-intro-skip:hover {
+    border-color: rgba(248, 250, 252, 0.34);
+    background: rgba(248, 250, 252, 0.12);
+    color: #FFFFFF;
+    transform: translateY(-1px);
+}
+
+.wk-onboarding-intro-skip:focus-visible {
+    outline: 2px solid rgba(167, 139, 250, 0.86);
+    outline-offset: 4px;
+}
+
 .wk-onboarding-intro.is-opening .wk-onboarding-intro-atmosphere {
     opacity: 0.78;
     background:
@@ -1899,6 +1940,11 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
     .wk-onboarding-intro-logo-shell {
         width: 118px;
         height: 118px;
+    }
+
+    .wk-onboarding-intro-skip {
+        top: 16px;
+        right: 16px;
     }
 
     .wk-onboarding-intro-logo {
