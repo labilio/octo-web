@@ -1,0 +1,67 @@
+[
+  {
+    "id": "workspace-map",
+    "labelKey": "app.onboarding.sections.workspace.label",
+    "titleKey": "app.onboarding.sections.workspace.title",
+    "descriptionKey": "app.onboarding.sections.workspace.description",
+    "visualTitleKey": "app.onboarding.sections.workspace.visualTitle",
+    "image": "onboarding-workspace-map.png"
+  },
+  {
+    "id": "subspaces",
+    "labelKey": "app.onboarding.sections.subspaces.label",
+    "titleKey": "app.onboarding.sections.subspaces.title",
+    "descriptionKey": "app.onboarding.sections.subspaces.description",
+    "visualTitleKey": "app.onboarding.sections.subspaces.visualTitle",
+    "image": "onboarding-subspaces.png"
+  },
+  {
+    "id": "favorites",
+    "labelKey": "app.onboarding.sections.favorites.label",
+    "titleKey": "app.onboarding.sections.favorites.title",
+    "descriptionKey": "app.onboarding.sections.favorites.description",
+    "visualTitleKey": "app.onboarding.sections.favorites.visualTitle",
+    "image": "onboarding-favorites.png"
+  },
+  {
+    "id": "group-md",
+    "label": "GROUP.md",
+    "titleKey": "app.onboarding.sections.groupMd.title",
+    "descriptionKey": "app.onboarding.sections.groupMd.description",
+    "visualTitleKey": "app.onboarding.sections.groupMd.visualTitle",
+    "image": "onboarding-group-md.png"
+  },
+  {
+    "id": "smart-summary",
+    "labelKey": "app.onboarding.sections.smartSummary.label",
+    "titleKey": "app.onboarding.sections.smartSummary.title",
+    "descriptionKey": "app.onboarding.sections.smartSummary.description",
+    "visualTitleKey": "app.onboarding.sections.smartSummary.visualTitle",
+    "image": "onboarding-smart-summary.png"
+  },
+  {
+    "id": "webhook",
+    "label": "Webhook",
+    "titleKey": "app.onboarding.sections.webhook.title",
+    "descriptionKey": "app.onboarding.sections.webhook.description",
+    "visualTitleKey": "app.onboarding.sections.webhook.visualTitle",
+    "image": "onboarding-webhook.png"
+  },
+  {
+    "id": "browser-extension",
+    "labelKey": "app.onboarding.sections.browserExtension.label",
+    "titleKey": "app.onboarding.sections.browserExtension.title",
+    "descriptionKey": "app.onboarding.sections.browserExtension.description",
+    "visualTitleKey": "app.onboarding.sections.browserExtension.visualTitle",
+    "image": "onboarding-browser-extension.png"
+  },
+  {
+    "id": "ai-avatar",
+    "labelKey": "app.onboarding.sections.aiAvatar.label",
+    "titleKey": "app.onboarding.sections.aiAvatar.title",
+    "descriptionKey": "app.onboarding.sections.aiAvatar.description",
+    "visualTitleKey": "app.onboarding.sections.aiAvatar.visualTitle",
+    "image": "octo-logo-white-symbol.png",
+    "imageFit": "contain"
+  }
+]
