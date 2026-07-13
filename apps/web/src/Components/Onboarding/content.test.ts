@@ -40,7 +40,10 @@ describe("onboarding content config", () => {
     });
     expect(sections[3].label).toBe("GROUP.md");
     expect(sections[5].label).toBe("Webhook");
-    expect(sections[7].imageFit).toBe("contain");
+    expect(ONBOARDING_SECTION_CONFIGS[7].image).toBe(
+      "onboarding-botfather.png"
+    );
+    expect(sections[7].imageFit).toBeUndefined();
     expect(sections.every((section) => section.imageSrc)).toBe(true);
   });
 });

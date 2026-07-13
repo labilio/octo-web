@@ -21,7 +21,7 @@
     "titleKey": "app.onboarding.sections.favorites.title",
     "descriptionKey": "app.onboarding.sections.favorites.description",
     "visualTitleKey": "app.onboarding.sections.favorites.visualTitle",
-    "image": "onboarding-favorites.png"
+    "image": "onboarding-favorites-frame13.png"
   },
   {
     "id": "group-md",
@@ -61,7 +61,6 @@
     "titleKey": "app.onboarding.sections.aiAvatar.title",
     "descriptionKey": "app.onboarding.sections.aiAvatar.description",
     "visualTitleKey": "app.onboarding.sections.aiAvatar.visualTitle",
-    "image": "octo-logo-white-symbol.png",
-    "imageFit": "contain"
+    "image": "onboarding-botfather.png"
   }
 ]

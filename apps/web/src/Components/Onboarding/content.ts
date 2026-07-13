@@ -11,8 +11,8 @@ const onboardingSectionImageSources = {
     "./assets/onboarding-subspaces.png",
     import.meta.url
   ).href,
-  "onboarding-favorites.png": new URL(
-    "./assets/onboarding-favorites.png",
+  "onboarding-favorites-frame13.png": new URL(
+    "./assets/onboarding-favorites-frame13.png",
     import.meta.url
   ).href,
   "onboarding-group-md.png": new URL(
@@ -31,8 +31,8 @@ const onboardingSectionImageSources = {
     "./assets/onboarding-webhook.png",
     import.meta.url
   ).href,
-  "octo-logo-white-symbol.png": new URL(
-    "./assets/octo-logo-white-symbol.png",
+  "onboarding-botfather.png": new URL(
+    "./assets/onboarding-botfather.png",
     import.meta.url
   ).href,
 } as const;

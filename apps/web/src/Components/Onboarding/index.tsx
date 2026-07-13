@@ -18,7 +18,6 @@ import { OnboardingHoverButton } from "./HoverButton";
 import { runOnboardingViewTransition } from "./viewTransition";
 import "./index.css";
 
-const MAX_AI_AVATAR_NAME_LENGTH = 24;
 const COMPLETION_CELEBRATION_MS = 1180;
 const COMPLETION_REDUCED_MOTION_MS = 120;
 const BROWSER_EXTENSION_URL =
@@ -52,8 +51,29 @@ function isBrowserExtensionSection(section: OnboardingSection) {
   return section.id === "browser-extension";
 }
 
-function isAiAvatarSection(section: OnboardingSection) {
-  return section.id === "ai-avatar";
+function hasStructuredDescription(section: OnboardingSection) {
+  return (
+    section.id === "workspace-map" ||
+    section.id === "subspaces" ||
+    section.id === "favorites" ||
+    section.id === "group-md" ||
+    section.id === "smart-summary" ||
+    section.id === "webhook" ||
+    section.id === "browser-extension" ||
+    section.id === "ai-avatar"
+  );
+}
+
+function getDescriptionParts(description: string) {
+  const [lead, ...support] = description
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  return {
+    lead,
+    support,
+  };
 }
 
 function getStorageKey() {
@@ -64,15 +84,6 @@ function getStorageKey() {
 function getIntroStorageKey() {
   const uid = WKApp.loginInfo.uid || "anonymous";
   return `octo:onboarding:intro:${ONBOARDING_STORAGE_VERSION}:${uid}`;
-}
-
-function getAiAvatarNameStorageKey() {
-  const uid = WKApp.loginInfo.uid || "anonymous";
-  return `octo:onboarding:ai-avatar-name:${ONBOARDING_STORAGE_VERSION}:${uid}`;
-}
-
-function normalizeAiAvatarName(name: string) {
-  return name.trim().slice(0, MAX_AI_AVATAR_NAME_LENGTH);
 }
 
 function isPreviewMode() {
@@ -136,68 +147,10 @@ function ImageVisual({ section }: { section: OnboardingSection }) {
   );
 }
 
-function IdentitySetupVisual({
-  aiAvatarName,
-  onNameChange,
-  onEnter,
-}: {
-  aiAvatarName: string;
-  onNameChange: (value: string) => void;
-  onEnter: () => void;
-}) {
-  const { t } = useI18n();
-  const normalizedName = normalizeAiAvatarName(aiAvatarName);
-  const previewName =
-    normalizedName || t("app.onboarding.sections.aiAvatar.previewName");
-  const avatarText = Array.from(previewName).slice(0, 2).join("");
-
-  return (
-    <div className="wk-onboarding-identity-stage">
-      <div className="wk-onboarding-identity-grid" aria-hidden="true" />
-      <div className="wk-onboarding-identity-compose">
-        <div className="wk-onboarding-longxia-avatar" aria-hidden="true">
-          <span>{avatarText}</span>
-          <i />
-        </div>
-        <div className="wk-onboarding-name-field">
-          <label htmlFor="wk-onboarding-ai-avatar-name">
-            {t("app.onboarding.sections.aiAvatar.nameLabel")}
-          </label>
-          <div className="wk-onboarding-name-input-shell">
-            <input
-              id="wk-onboarding-ai-avatar-name"
-              value={aiAvatarName}
-              maxLength={MAX_AI_AVATAR_NAME_LENGTH}
-              placeholder={t(
-                "app.onboarding.sections.aiAvatar.namePlaceholder"
-              )}
-              autoComplete="off"
-              onChange={(event) => onNameChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && normalizedName) {
-                  onEnter();
-                }
-              }}
-            />
-            <span>
-              {normalizedName.length}/{MAX_AI_AVATAR_NAME_LENGTH}
-            </span>
-          </div>
-        </div>
-        <div className="wk-onboarding-mention-preview">
-          <span className="wk-onboarding-mention-token">@{previewName}</span>
-          <strong>{t("app.onboarding.sections.aiAvatar.previewHint")}</strong>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export const Onboarding: React.FC = () => {
   const { locale, t } = useI18n();
   const storageKey = useMemo(() => getStorageKey(), []);
   const introStorageKey = useMemo(() => getIntroStorageKey(), []);
-  const aiAvatarNameStorageKey = useMemo(() => getAiAvatarNameStorageKey(), []);
   const previewMode = useMemo(() => isPreviewMode(), []);
   const introPreviewMode = useMemo(() => isIntroPreviewMode(), []);
   const onboardingSections = useMemo(() => createOnboardingSections(t), [t]);
@@ -207,9 +160,6 @@ export const Onboarding: React.FC = () => {
     x: number;
     y: number;
   } | null>(null);
-  const [aiAvatarName, setAiAvatarName] = useState(() => {
-    return localStorage.getItem(aiAvatarNameStorageKey) || "";
-  });
   const [visible, setVisible] = useState(() => {
     if (previewMode) return true;
 
@@ -231,9 +181,11 @@ export const Onboarding: React.FC = () => {
   const activeSection =
     onboardingSections.find((section) => section.id === activeId) ||
     onboardingSections[0];
+  const structuredDescription = hasStructuredDescription(activeSection)
+    ? getDescriptionParts(activeSection.description)
+    : null;
   const isFinalSection =
     activeSection.id === onboardingSections[onboardingSections.length - 1].id;
-  const finalAiAvatarName = normalizeAiAvatarName(aiAvatarName);
 
   useEffect(() => {
     return () => {
@@ -253,24 +205,18 @@ export const Onboarding: React.FC = () => {
   const handleClose = () => {
     if (isCompleting) return;
 
-    if (isFinalSection && finalAiAvatarName) {
-      handleFinish();
-      return;
-    }
-
     persistDismissed();
     setVisible(false);
   };
 
   const handleFinish = (event?: React.MouseEvent<HTMLButtonElement>) => {
-    if (completionStartedRef.current || !finalAiAvatarName) return;
+    if (completionStartedRef.current) return;
 
     completionStartedRef.current = true;
     setCompletionOrigin(getCompletionOrigin(event, finishButtonRef.current));
-    localStorage.setItem(aiAvatarNameStorageKey, finalAiAvatarName);
     persistDismissed();
     setIsCompleting(true);
-    WKApp.mittBus.emit("onboarding-ai-avatar-created" as any);
+    WKApp.mittBus.emit("onboarding-completed" as any);
     completionTimerRef.current = window.setTimeout(() => {
       completionTimerRef.current = null;
       setVisible(false);
@@ -380,7 +326,7 @@ export const Onboarding: React.FC = () => {
       ) : null}
       <span className="wk-onboarding-sr-only" role="status" aria-live="polite">
         {isCompleting
-          ? t("app.onboarding.sections.aiAvatar.completionStatus")
+          ? t("app.onboarding.actions.completed")
           : ""}
       </span>
       <section className="wk-onboarding-panel">
@@ -456,27 +402,40 @@ export const Onboarding: React.FC = () => {
           </h1>
 
           <div
-            className={`wk-onboarding-media-frame${
-              isAiAvatarSection(activeSection) ? " is-identity" : ""
-            }`}
+            className="wk-onboarding-media-frame"
             aria-label={activeSection.visualTitle}
           >
-            {isAiAvatarSection(activeSection) ? (
-              <IdentitySetupVisual
-                aiAvatarName={aiAvatarName}
-                onNameChange={(value) =>
-                  setAiAvatarName(value.slice(0, MAX_AI_AVATAR_NAME_LENGTH))
-                }
-                onEnter={handleFinish}
-              />
-            ) : (
-              <ImageVisual section={activeSection} />
-            )}
+            <ImageVisual section={activeSection} />
           </div>
 
-          <p className="wk-onboarding-description">
-            {activeSection.description}
-          </p>
+          {structuredDescription ? (
+            <p
+              className={`wk-onboarding-description is-${activeSection.id}`}
+            >
+              <strong className="wk-onboarding-description-lead">
+                {structuredDescription.lead}
+              </strong>
+              {structuredDescription.support.length > 0 ? (
+                <span className="wk-onboarding-description-support">
+                  {structuredDescription.support.map((paragraph, index) => (
+                    <span
+                      className="wk-onboarding-description-support-line"
+                      key={paragraph}
+                    >
+                      {paragraph}
+                      {index < structuredDescription.support.length - 1
+                        ? "\n"
+                        : null}
+                    </span>
+                  ))}
+                </span>
+              ) : null}
+            </p>
+          ) : (
+            <p className={`wk-onboarding-description is-${activeSection.id}`}>
+              {activeSection.description}
+            </p>
+          )}
 
           {isBrowserExtensionSection(activeSection) ? (
             <div className="wk-onboarding-extension-row">
@@ -501,7 +460,7 @@ export const Onboarding: React.FC = () => {
             </div>
           ) : null}
 
-          {isAiAvatarSection(activeSection) ? (
+          {isFinalSection ? (
             <div className="wk-onboarding-finish-row">
               <OnboardingHoverButton
                 ref={finishButtonRef}
@@ -510,8 +469,8 @@ export const Onboarding: React.FC = () => {
                 }`}
                 text={
                   isCompleting
-                    ? t("app.onboarding.sections.aiAvatar.completionStatus")
-                    : t("app.onboarding.sections.aiAvatar.enableAction")
+                    ? t("app.onboarding.actions.completed")
+                    : t("app.onboarding.actions.finish")
                 }
                 icon={
                   isCompleting ? (
@@ -522,7 +481,7 @@ export const Onboarding: React.FC = () => {
                 }
                 variant="brand"
                 onClick={handleFinish}
-                disabled={!finalAiAvatarName || isCompleting}
+                disabled={isCompleting}
               />
             </div>
           ) : null}
