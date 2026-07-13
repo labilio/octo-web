@@ -1,11 +1,11 @@
 [
   {
-    "id": "workspace-map",
+    "id": "workspace",
     "labelKey": "app.onboarding.sections.workspace.label",
     "titleKey": "app.onboarding.sections.workspace.title",
     "descriptionKey": "app.onboarding.sections.workspace.description",
     "visualTitleKey": "app.onboarding.sections.workspace.visualTitle",
-    "image": "onboarding-workspace-map.png"
+    "image": "onboarding-workspace.png"
   },
   {
     "id": "subspaces",
@@ -21,7 +21,7 @@
     "titleKey": "app.onboarding.sections.favorites.title",
     "descriptionKey": "app.onboarding.sections.favorites.description",
     "visualTitleKey": "app.onboarding.sections.favorites.visualTitle",
-    "image": "onboarding-favorites-frame13.png"
+    "image": "onboarding-favorites.png"
   },
   {
     "id": "group-md",
@@ -56,11 +56,11 @@
     "image": "onboarding-browser-extension.png"
   },
   {
-    "id": "ai-avatar",
-    "labelKey": "app.onboarding.sections.aiAvatar.label",
-    "titleKey": "app.onboarding.sections.aiAvatar.title",
-    "descriptionKey": "app.onboarding.sections.aiAvatar.description",
-    "visualTitleKey": "app.onboarding.sections.aiAvatar.visualTitle",
-    "image": "onboarding-botfather.png"
+    "id": "create-bot",
+    "labelKey": "app.onboarding.sections.createBot.label",
+    "titleKey": "app.onboarding.sections.createBot.title",
+    "descriptionKey": "app.onboarding.sections.createBot.description",
+    "visualTitleKey": "app.onboarding.sections.createBot.visualTitle",
+    "image": "onboarding-create-bot.png"
   }
 ]

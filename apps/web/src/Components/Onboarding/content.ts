@@ -3,16 +3,16 @@ import sectionConfigs from "./sections.json";
 export const ONBOARDING_STORAGE_VERSION = "v2";
 
 const onboardingSectionImageSources = {
-  "onboarding-workspace-map.png": new URL(
-    "./assets/onboarding-workspace-map.png",
+  "onboarding-workspace.png": new URL(
+    "./assets/onboarding-workspace.png",
     import.meta.url
   ).href,
   "onboarding-subspaces.png": new URL(
     "./assets/onboarding-subspaces.png",
     import.meta.url
   ).href,
-  "onboarding-favorites-frame13.png": new URL(
-    "./assets/onboarding-favorites-frame13.png",
+  "onboarding-favorites.png": new URL(
+    "./assets/onboarding-favorites.png",
     import.meta.url
   ).href,
   "onboarding-group-md.png": new URL(
@@ -31,21 +31,21 @@ const onboardingSectionImageSources = {
     "./assets/onboarding-webhook.png",
     import.meta.url
   ).href,
-  "onboarding-botfather.png": new URL(
-    "./assets/onboarding-botfather.png",
+  "onboarding-create-bot.png": new URL(
+    "./assets/onboarding-create-bot.png",
     import.meta.url
   ).href,
 } as const;
 
 export type OnboardingSectionId =
-  | "workspace-map"
+  | "workspace"
   | "subspaces"
   | "favorites"
   | "group-md"
   | "smart-summary"
   | "webhook"
   | "browser-extension"
-  | "ai-avatar";
+  | "create-bot";
 
 type OnboardingSectionImage = keyof typeof onboardingSectionImageSources;
 type OnboardingTranslationKey = `app.onboarding.${string}`;

@@ -1615,8 +1615,8 @@ html[data-octo-onboarding-vt="active"]::view-transition-new(root) {
 .wk-onboarding-description.is-smart-summary,
 .wk-onboarding-description.is-webhook,
 .wk-onboarding-description.is-browser-extension,
-.wk-onboarding-description.is-ai-avatar,
-.wk-onboarding-description.is-workspace-map,
+.wk-onboarding-description.is-create-bot,
+.wk-onboarding-description.is-workspace,
 .wk-onboarding-description.is-subspaces {
     display: grid;
     gap: 9px;

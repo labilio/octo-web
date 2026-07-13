@@ -53,14 +53,14 @@ function isBrowserExtensionSection(section: OnboardingSection) {
 
 function hasStructuredDescription(section: OnboardingSection) {
   return (
-    section.id === "workspace-map" ||
+    section.id === "workspace" ||
     section.id === "subspaces" ||
     section.id === "favorites" ||
     section.id === "group-md" ||
     section.id === "smart-summary" ||
     section.id === "webhook" ||
     section.id === "browser-extension" ||
-    section.id === "ai-avatar"
+    section.id === "create-bot"
   );
 }
 
@@ -155,7 +155,7 @@ export const Onboarding: React.FC = () => {
   const introPreviewMode = useMemo(() => isIntroPreviewMode(), []);
   const onboardingSections = useMemo(() => createOnboardingSections(t), [t]);
   const [activeId, setActiveId] =
-    useState<OnboardingSectionId>("workspace-map");
+    useState<OnboardingSectionId>("workspace");
   const [completionOrigin, setCompletionOrigin] = useState<{
     x: number;
     y: number;
@@ -340,7 +340,7 @@ export const Onboarding: React.FC = () => {
           <nav className="wk-onboarding-nav-list">
             {onboardingSections.map((section, index) => (
               <React.Fragment key={section.id}>
-                {section.id === "ai-avatar" ? (
+                {section.id === "create-bot" ? (
                   <div
                     className="wk-onboarding-nav-divider"
                     aria-hidden="true"

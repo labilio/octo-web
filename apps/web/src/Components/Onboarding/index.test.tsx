@@ -45,13 +45,13 @@ vi.mock("@octo/base", () => ({
           "Connect to Octo from the browser you already use",
         "app.onboarding.sections.browserExtension.description":
           "The browser extension prevents tool switching\nOpen Octo beside the current page\nKeep working while the conversation continues",
-        "app.onboarding.sections.aiAvatar.label": "Create your Bot",
-        "app.onboarding.sections.aiAvatar.title": "Create your Bot",
-        "app.onboarding.sections.aiAvatar.description":
+        "app.onboarding.sections.createBot.label": "Create your Bot",
+        "app.onboarding.sections.createBot.title": "Create your Bot",
+        "app.onboarding.sections.createBot.description":
           "Go to BotFather, create your first Bot, and start experiencing Octo.",
         "app.onboarding.actions.finish": "Finish",
         "app.onboarding.actions.completed": "Completed",
-        "app.onboarding.sections.aiAvatar.visualTitle":
+        "app.onboarding.sections.createBot.visualTitle":
           "Cursor hovering over the BotFather entry",
       })[key] || key,
   }),
