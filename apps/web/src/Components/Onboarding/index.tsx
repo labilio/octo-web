@@ -46,6 +46,7 @@ const CELEBRATION_PARTICLES = Array.from({ length: 46 }, (_, index) => {
 });
 
 type OnboardingSectionId = OnboardingSection["id"];
+const preloadedOnboardingImages = new Map<string, HTMLImageElement>();
 
 function isBrowserExtensionSection(section: OnboardingSection) {
   return section.id === "browser-extension";
@@ -135,6 +136,25 @@ function getCompletionOrigin(
   return getElementCenter(event?.currentTarget || fallbackElement || null);
 }
 
+function preloadOnboardingImages(
+  sections: OnboardingSection[],
+  currentImageSrc: string
+) {
+  sections.forEach((section) => {
+    const { imageSrc } = section;
+
+    if (imageSrc === currentImageSrc || preloadedOnboardingImages.has(imageSrc)) {
+      return;
+    }
+
+    const image = new Image();
+    image.decoding = "async";
+    image.src = imageSrc;
+    preloadedOnboardingImages.set(imageSrc, image);
+    void image.decode?.().catch(() => undefined);
+  });
+}
+
 function ImageVisual({ section }: { section: OnboardingSection }) {
   return (
     <img
@@ -143,6 +163,7 @@ function ImageVisual({ section }: { section: OnboardingSection }) {
       }`}
       src={section.imageSrc}
       alt={section.visualTitle}
+      decoding="async"
     />
   );
 }
@@ -194,6 +215,16 @@ export const Onboarding: React.FC = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!visible || showIntro) return;
+
+    const preloadTimer = window.setTimeout(() => {
+      preloadOnboardingImages(onboardingSections, activeSection.imageSrc);
+    }, 0);
+
+    return () => window.clearTimeout(preloadTimer);
+  }, [activeSection.imageSrc, onboardingSections, showIntro, visible]);
 
   const persistDismissed = () => {
     if (!previewMode) {
