@@ -19,6 +19,11 @@ export interface CreateChannelOptions {
   spaceId?: string;
 }
 
+export interface GroupAnnouncementPayload {
+  notice: string;
+  noticeDoc: string;
+}
+
 function stripSpacePrefix(uid: string) {
   if (!hasSpacePrefix(uid)) {
     return uid;
@@ -107,6 +112,16 @@ export function updateChannelField(
 ): Promise<void> {
   return APIClient.shared.put(`groups/${channel.channelID}`, {
     [field]: value,
+  });
+}
+
+export function updateGroupAnnouncement(
+  channel: Channel,
+  payload: GroupAnnouncementPayload
+): Promise<void> {
+  return APIClient.shared.put(`groups/${channel.channelID}`, {
+    notice: payload.notice,
+    notice_doc: payload.noticeDoc,
   });
 }
 

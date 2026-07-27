@@ -85,6 +85,7 @@ vi.mock("wukongimjssdk", () => {
 
 vi.mock("../../../App", () => ({
     default: {
+        config: { systemUID: "claude" },
         loginInfo: { uid: "me" },
         dataSource: { channelDataSource: { subscribers: () => Promise.resolve([]) } },
         mittBus: { on: () => {}, off: () => {} },
@@ -176,6 +177,20 @@ const SMALL_VIDEO = 5
 const FILE = 8
 const RICH_TEXT = 14
 const INTERACTIVE_CARD = 17
+const GROUP_UPDATE = 1005
+
+function groupAnnouncementMessage(timestamp: number) {
+    const message = botMessage(GROUP_UPDATE, timestamp)
+    message.content = {
+        content: {
+            data: {
+                notice: "Important notice",
+            },
+            extra: [{ uid: "alice", name: "Alice" }],
+        },
+    }
+    return message
+}
 
 function humanMessage(contentType: number, timestamp: number, fromUID: string = "alice") {
     const messageSeq = seqCounter++
@@ -217,6 +232,19 @@ describe("ConversationVM fold session file attachment", () => {
 
         expect(items.every((item) => item.type === "message")).toBe(true)
         expect(items.map((item) => (item as any).message.contentType)).toEqual([TEXT, contentType])
+    })
+
+    it("keeps consecutive group announcements standalone", () => {
+        const vm = new ConversationVM(channel)
+        const messages = [
+            groupAnnouncementMessage(100),
+            groupAnnouncementMessage(110),
+        ]
+
+        const items = vm.buildRenderItems(messages)
+
+        expect(items.every((item) => item.type === "message")).toBe(true)
+        expect(items).toHaveLength(2)
     })
 
     // --- Voice should still fold ---

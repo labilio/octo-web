@@ -47,6 +47,10 @@ import {
   muteChannelSetting,
   topChannelSetting,
 } from "../../bridge/channelSetting/channelSettingActions";
+import {
+  formatGroupAnnouncementConversationDigest,
+  resolveGroupAnnouncement,
+} from "../../features/groupAnnouncement/announcementModel";
 export type ConvFilter = "all" | "human" | "ai" | "group" | "dm";
 
 // ── 在线态判定/渲染 helper ──────────────────────────────────────────────
@@ -606,6 +610,18 @@ export default class ConversationList extends Component<
     }
     if (lastMessage.flame) {
       return FlameMessageCell.tip(lastMessage);
+    }
+    const announcement = resolveGroupAnnouncement({
+      fromUID: lastMessage.fromUID,
+      systemUID: WKApp.config.systemUID,
+      contentType: lastMessage.contentType,
+      payload: (lastMessage.content as any)?.content,
+    });
+    if (announcement) {
+      return formatGroupAnnouncementConversationDigest(
+        announcement,
+        t("base.module.channelSettings.groupNotice")
+      );
     }
     if (lastMessage.channel.channelType === ChannelTypePerson) {
       return lastMessage.content?.conversationDigest;

@@ -8,13 +8,14 @@ export interface ListItemProps {
     style: CSSProperties
     title: string
     subTitle?: React.ReactNode
+    truncateSubtitle?: boolean
     onClick?: () => void
 }
 
 export class ListItem extends Component<ListItemProps>{
 
     render() {
-        const { style, title, subTitle, onClick } = this.props
+        const { style, title, subTitle, truncateSubtitle, onClick } = this.props
         const clickable = typeof onClick === "function"
         const titleAttr = typeof subTitle === "string" ? subTitle : undefined
         return <div className={`wk-list-item ${clickable ? "wk-list-item-ripple" : "wk-list-item-static"}`} style={style} title={titleAttr} onClick={() => {
@@ -47,7 +48,7 @@ export class ListItemMuliteLine extends Component<ListItemProps>{
         return subTitle != null
     }
     render() {
-        const { style, title, subTitle, onClick } = this.props
+        const { style, title, subTitle, truncateSubtitle, onClick } = this.props
         return <div className="wk-list-item wk-list-item-ripple" style={{ "display": this.hasSubtitle() ? "block" : undefined }} onClick={() => {
             if (onClick) {
                 onClick()
@@ -58,7 +59,7 @@ export class ListItemMuliteLine extends Component<ListItemProps>{
             </div>
 
             {
-                this.hasSubtitle() ? <div className="wk-list-item-subtitle-muliteline">
+                this.hasSubtitle() ? <div className={`wk-list-item-subtitle-muliteline${truncateSubtitle ? " wk-list-item-subtitle-oneline" : ""}`}>
                     {subTitle}
                 </div> : <div className="wk-list-item-subtitle wk-list-item-subtitle-oneline">
                     {this.context.t("base.common.notSet")}

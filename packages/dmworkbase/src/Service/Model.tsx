@@ -16,6 +16,7 @@ import {
     type MentionUidState,
 } from "../Utils/mentionRender"
 import { getImChannelInfo, getImChannelSubscribers } from "../im-runtime/channelRuntime"
+import { resolveGroupAnnouncement } from "../features/groupAnnouncement/announcementModel"
 
 export class ConversationWrap {
     conversation: Conversation
@@ -60,6 +61,14 @@ export class ConversationWrap {
 
     private isSystemMessage(message: Message | undefined): boolean {
         if (!message) return false
+        if (resolveGroupAnnouncement({
+            fromUID: message.fromUID,
+            systemUID: WKApp.config.systemUID,
+            contentType: message.contentType,
+            payload: (message.content as any)?.content,
+        })) {
+            return false
+        }
         return ConversationWrap.systemContentTypes.has(message.contentType)
     }
 

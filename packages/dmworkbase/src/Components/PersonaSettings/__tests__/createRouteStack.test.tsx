@@ -59,6 +59,7 @@ vi.mock("@douyinfe/semi-ui", () => ({
 
 import WKViewQueue, { WKViewQueueContext } from "../../WKViewQueue"
 import RoutePage from "../../RoutePage"
+import { RouteContextConfig } from "../../../Service/Context"
 import type RouteContext from "../../../Service/Context"
 
 let container: HTMLDivElement
@@ -130,6 +131,71 @@ describe("WKViewQueue.replace — YUJ-1348", () => {
 })
 
 describe("RoutePage.replace — YUJ-1348", () => {
+    it("renders a targeted header action without replacing legacy finish buttons", async () => {
+        let ctx: RouteContext<any> | undefined
+        await act(async () => {
+            ReactDOM.render(
+                <RoutePage
+                    title="root"
+                    render={(c) => {
+                        ctx = c
+                        return <div>root</div>
+                    }}
+                />,
+                container,
+            )
+        })
+
+        const config = new RouteContextConfig({ title: "群公告" })
+        ;(config as any).headerAction = (
+            <button data-testid="announcement-header-action">编辑</button>
+        )
+        await act(async () => {
+            ctx!.push(<div>announcement</div>, config)
+        })
+
+        expect(
+            container.querySelector(
+                '[data-testid="announcement-header-action"]',
+            ),
+        ).not.toBeNull()
+        expect(
+            container.querySelectorAll(".wk-route-header-right-view button"),
+        ).toHaveLength(1)
+    })
+
+    it("renders the configured finish button title in the route header", async () => {
+        let ctx: RouteContext<any> | undefined
+        await act(async () => {
+            ReactDOM.render(
+                <RoutePage
+                    title="root"
+                    render={(c) => {
+                        ctx = c
+                        return <div>root</div>
+                    }}
+                />,
+                container,
+            )
+        })
+
+        await act(async () => {
+            ctx!.push(
+                <div>announcement</div>,
+                new RouteContextConfig({
+                    title: "群公告",
+                    showFinishButton: true,
+                    finishButtonTitle: "编辑",
+                }),
+            )
+        })
+
+        expect(
+            container.querySelector(".wk-route-header-right-view button")
+                ?.textContent,
+        ).toBe("编辑")
+    })
+
     it("after push + replace, the route stack has exactly one entry above root (not two)", async () => {
         let ctx: RouteContext<any> | undefined
         await act(async () => {

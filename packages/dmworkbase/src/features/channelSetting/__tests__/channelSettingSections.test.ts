@@ -293,6 +293,70 @@ describe("channel setting section builders", () => {
     expect(disbanded?.rows?.[0].properties.value).toBe("remark");
   });
 
+  it("opens the full group announcement in read-only mode for members", () => {
+    const notice = "Important notice\nFirst item\nSecond item";
+    const context = createContext({
+      isManagerOrCreatorOfMe: false,
+      channelInfo: {
+        title: "Group 1",
+        orgData: {
+          notice,
+          notice_doc: JSON.stringify({
+            type: "doc",
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "Important notice" }],
+              },
+            ],
+          }),
+        },
+      },
+    });
+    const section = buildChannelGroupInfoSection(context, vi.fn());
+    const announcementRow = section?.rows?.find(
+      (row) => row.properties.value === notice
+    );
+
+    announcementRow?.properties.onClick();
+
+    expect(context.push).toHaveBeenCalledTimes(1);
+    const announcementPage = context.push.mock.calls[0][0];
+    const routeConfig = context.push.mock.calls[0][1];
+    expect(announcementPage.props.canEdit).toBe(false);
+    expect(announcementPage.props.initialNotice).toBe(notice);
+    expect(routeConfig.headerAction).toBeUndefined();
+  });
+
+  it("opens the same read-only detail before managers enter the editor", () => {
+    const notice = "Manager announcement";
+    const context = createContext({
+      isManagerOrCreatorOfMe: true,
+      channelInfo: {
+        title: "Group 1",
+        orgData: {
+          notice,
+        },
+      },
+    });
+    const section = buildChannelGroupInfoSection(context, vi.fn());
+    const announcementRow = section?.rows?.find(
+      (row) => row.properties.value === notice
+    );
+
+    announcementRow?.properties.onClick();
+
+    expect(context.push).toHaveBeenCalledTimes(1);
+    const announcementDetail = context.push.mock.calls[0][0];
+    const routeConfig = context.push.mock.calls[0][1];
+    expect(announcementDetail.props.canEdit).toBe(true);
+    expect(announcementDetail.props.initialNotice).toBe(notice);
+    expect(routeConfig.headerAction).toBeDefined();
+    expect(routeConfig.headerAction.props.variant).toBe("ghost");
+    expect(routeConfig.headerAction.props.size).toBe("sm");
+    expect(routeConfig.headerAction.props.children).toBe(t("base.common.edit"));
+  });
+
   it("builds thread setting sections for active thread channels", () => {
     const inputEditPush = vi.fn();
     const context = createThreadContext();

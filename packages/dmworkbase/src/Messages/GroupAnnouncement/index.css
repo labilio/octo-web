@@ -1,0 +1,55 @@
+.wk-group-announcement-card {
+  width: min(480px, 100%);
+  overflow: hidden;
+  background: var(--wk-bg-surface);
+  border: 1px solid var(--wk-border-subtle);
+  border-radius: var(--wk-r-md);
+}
+
+.wk-group-announcement-card__viewport {
+  max-height: calc(var(--wk-sp-12) * 7);
+  overflow: hidden;
+}
+
+.wk-group-announcement-card__viewport .wk-interactive-card-sdk {
+  border: 0;
+  border-radius: 0;
+}
+
+.wk-group-announcement-card__more {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  min-height: var(--wk-sp-10);
+  padding: var(--wk-sp-1) var(--wk-sp-3);
+  background: var(--wk-bg-surface);
+  border-top: 1px solid var(--wk-border-subtle);
+}
+
+.wk-group-announcement-card--overflowing
+  .wk-group-announcement-card__viewport::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--wk-sp-8);
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--wk-bg-surface)
+  );
+  content: "";
+  pointer-events: none;
+}
+
+.wk-group-announcement-card__viewport {
+  position: relative;
+}
+
+.wk-group-announcement-card__more-button {
+  color: var(--wk-text-accent);
+}
+
+.wk-group-announcement-card__more-button .wk-btn__icon {
+  order: 2;
+}

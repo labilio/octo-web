@@ -15,13 +15,15 @@ export class RouteContextConfig {
      * 切换实时更新的标题——title 在 push 时只存一次，纯字符串快照不会响应 i18n。
      */
     title?: ReactNode
+    headerAction?: ReactNode
     showFinishButton?: boolean
     finishButtonTitle?: string
     onFinish?: () => void
     onFinishContext?:(finishButtonContext:FinishButtonContext) => void
 
-    constructor(v: { title?: ReactNode, showFinishButton?: boolean, finishButtonTitle?: string, onFinish?: () => void,onFinishContext?:(finishButtonContext:FinishButtonContext) => void }) {
+    constructor(v: { title?: ReactNode, headerAction?: ReactNode, showFinishButton?: boolean, finishButtonTitle?: string, onFinish?: () => void,onFinishContext?:(finishButtonContext:FinishButtonContext) => void }) {
          this.title = v.title
+         this.headerAction = v.headerAction
          this.showFinishButton = v.showFinishButton
          this.finishButtonTitle = v.finishButtonTitle
          this.onFinish = v.onFinish

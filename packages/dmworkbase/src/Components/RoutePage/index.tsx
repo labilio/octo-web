@@ -52,11 +52,12 @@ export default class RoutePage extends Component<RoutePageProps, RoutePageState>
         if (config && config.onFinishContext) {
             config.onFinishContext(this)
         }
-        const { routeConfigs } = this.state
-        routeConfigs.push(config)
-        this.setState({
-            routeConfigs: routeConfigs,
-            pushViewCount: this.state.pushViewCount + 1
+        this.setState((prevState) => {
+            const routeConfigs = [...prevState.routeConfigs, config]
+            return {
+                routeConfigs,
+                pushViewCount: routeConfigs.length,
+            }
         })
         this.viewQueueContext.push(view)
         // if(config && config.onFinishContext) {
@@ -77,13 +78,16 @@ export default class RoutePage extends Component<RoutePageProps, RoutePageState>
         this.viewQueueContext.popToRoot()
     }
     pop(): void {
-        const { pushViewCount, routeConfigs } = this.state
-        routeConfigs.splice(routeConfigs.length - 1, 1)
-        this.setState({
-            routeConfigs: routeConfigs,
-            pushViewCount: pushViewCount - 1
+        if (!this.viewQueueContext.pop()) {
+            return
+        }
+        this.setState((prevState) => {
+            const routeConfigs = prevState.routeConfigs.slice(0, -1)
+            return {
+                routeConfigs,
+                pushViewCount: routeConfigs.length,
+            }
         })
-        this.viewQueueContext.pop()
     }
 
     /**
@@ -165,11 +169,11 @@ export default class RoutePage extends Component<RoutePageProps, RoutePageState>
                 </div>
                 <div className={classNames("wk-route-header-right-view", pushViewCount > 0 ? "wk-route-header-right-view-open" : undefined)}>
                     {
-                        routeConfig?.showFinishButton ? <Button disabled={finishButtonDisable} loading={finishButtonLoading} theme='solid' type='primary' onClick={() => {
+                        routeConfig?.headerAction || (routeConfig?.showFinishButton ? <Button disabled={finishButtonDisable} loading={finishButtonLoading} theme='solid' type='primary' onClick={() => {
                             if (routeConfig?.onFinish) {
                                 routeConfig?.onFinish()
                             }
-                        }}>{this.context.t("base.common.done")}</Button> : undefined
+                        }}>{routeConfig.finishButtonTitle || this.context.t("base.common.done")}</Button> : undefined)
                     }
                 </div>
             </div>

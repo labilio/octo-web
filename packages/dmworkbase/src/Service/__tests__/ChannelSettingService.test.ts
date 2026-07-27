@@ -16,6 +16,7 @@ import {
   removeChannelSubscribers,
   transferChannelOwner,
   updateChannelField,
+  updateGroupAnnouncement,
   updateChannelSetting,
   updateChannelSubscriberAttr,
   updateThread,
@@ -139,6 +140,22 @@ describe("ChannelSettingService", () => {
     });
     expect(apiPut).toHaveBeenCalledWith("groups/group-1/members/alice", {
       remark: "A",
+    });
+  });
+
+  it("publishes a group announcement through the existing group endpoint", async () => {
+    const channel = new Channel("group-1", ChannelTypeGroup);
+    const noticeDoc =
+      '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Meeting"}]}]}';
+
+    await updateGroupAnnouncement(channel, {
+      notice: "Meeting",
+      noticeDoc,
+    });
+
+    expect(apiPut).toHaveBeenCalledWith("groups/group-1", {
+      notice: "Meeting",
+      notice_doc: noticeDoc,
     });
   });
 

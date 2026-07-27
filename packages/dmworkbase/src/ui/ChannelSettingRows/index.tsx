@@ -18,6 +18,7 @@ export interface ChannelSettingInfoRowProps {
   title: string;
   value?: React.ReactNode;
   multiline?: boolean;
+  truncate?: boolean;
   onClick?: () => void;
 }
 
@@ -25,10 +26,19 @@ export function ChannelSettingInfoRow({
   title,
   value,
   multiline = false,
+  truncate = false,
   onClick,
 }: ChannelSettingInfoRowProps) {
   const Cell = multiline ? ListItemMuliteLine : ListItem;
-  return <Cell title={title} subTitle={value} onClick={onClick} style={{}} />;
+  return (
+    <Cell
+      title={title}
+      subTitle={value}
+      truncateSubtitle={truncate}
+      onClick={onClick}
+      style={{}}
+    />
+  );
 }
 
 export interface ChannelSettingIconRowProps {

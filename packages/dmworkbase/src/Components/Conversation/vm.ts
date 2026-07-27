@@ -48,6 +48,7 @@ import {
     setImChannelSubscribersCache,
     syncImChannelSubscribers,
 } from "../../im-runtime/channelRuntime";
+import { resolveGroupAnnouncement } from "../../features/groupAnnouncement/announcementModel";
 
 export interface FoldSessionParticipant {
     uid: string
@@ -335,6 +336,14 @@ export default class ConversationVM extends ProviderListener {
     // ——尤其互动卡片带按钮/输入，一旦被折叠就无法交互。
     // 注意：语音（voice=4）可以折叠，故不在此列。
     private isUnfoldableDeliverable(message: MessageWrap): boolean {
+        if (resolveGroupAnnouncement({
+            fromUID: message.fromUID,
+            systemUID: WKApp.config.systemUID,
+            contentType: message.contentType,
+            payload: (message.content as any)?.content,
+        })) {
+            return true
+        }
         switch (message.contentType) {
             case MessageContentTypeConst.image:
             case MessageContentTypeConst.gif:

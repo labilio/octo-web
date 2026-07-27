@@ -1,5 +1,6 @@
 import { Channel, Message, MessageContent } from "wukongimjssdk";
 import type { WebhookIssuePreviewTarget } from "../../bridge/message/webhookPreview";
+import type { GroupAnnouncementViewModel } from "../../features/groupAnnouncement/announcementModel";
 import { MessageInputContext } from "../MessageInput";
 import { MessageWrap } from "../../Service/Model";
 
@@ -153,6 +154,9 @@ export default interface ConversationContext {
 
   /** 在右侧打开 Webhook 消息中实际点击的 Fleet 任务。 */
   openWebhookPreview?(target: WebhookIssuePreviewTarget): void;
+
+  /** 在右侧面板中打开完整群公告。 */
+  openGroupAnnouncement?(announcement: GroupAnnouncementViewModel): void;
 
   /**
    * 获取当前正在预览的文件消息 ID

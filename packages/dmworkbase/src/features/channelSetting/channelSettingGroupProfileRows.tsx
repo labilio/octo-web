@@ -6,16 +6,24 @@ import WKApp from "../../App";
 import { ChannelAvatar } from "../../Components/ChannelAvatar";
 import ChannelQRCode from "../../Components/ChannelQRCode";
 import { ChannelSettingRouteData } from "../../Components/ChannelSetting/context";
+import WKButton from "../../Components/WKButton";
 import RouteContext, { RouteContextConfig } from "../../Service/Context";
 import { ChannelField } from "../../Service/DataSource/DataSource";
+import { updateGroupAnnouncement } from "../../Service/ChannelSettingService";
 import { GROUP_NAME_MAX_LENGTH } from "../../Service/nameLimits";
 import { Row } from "../../Service/Section";
 import { updateChannelSettingField } from "../../bridge/channelSetting/channelSettingActions";
+import { fetchCurrentImChannelInfo } from "../../im-runtime/currentChannelRuntime";
 import { t } from "../../i18n";
 import {
   ChannelSettingIconRow,
+  ChannelSettingInfoRow,
   ChannelSettingInlineEditRow,
 } from "../../ui/ChannelSettingRows";
+import {
+  GroupAnnouncementPage,
+  GroupAnnouncementPageHandle,
+} from "../groupAnnouncement/GroupAnnouncementPage";
 import { ChannelSettingInputEditPush } from "./types";
 
 interface BuildGroupProfileRowsOptions {
@@ -116,32 +124,49 @@ export function buildGroupProfileRows({
       },
     }),
     new Row({
-      cell: ChannelSettingInlineEditRow,
+      cell: ChannelSettingInfoRow,
       properties: {
         title: t("base.module.channelSettings.groupNotice"),
         value: channelInfo?.orgData?.notice,
         multiline: true,
-        placeholder: t("base.module.channelSettings.groupNotice"),
-        maxCount: 400,
-        allowEmpty: true,
-        onStartEdit: () => {
-          if (!data.isManagerOrCreatorOfMe) {
-            Toast.warning(
-              t("base.module.channelSettings.groupNoticeOnlyManager")
-            );
-            return false;
-          }
-          return true;
+        truncate: true,
+        onClick: () => {
+          const announcementPageRef =
+            React.createRef<GroupAnnouncementPageHandle>();
+          context.push(
+            <GroupAnnouncementPage
+              ref={announcementPageRef}
+              context={context}
+              initialNotice={channelInfo?.orgData?.notice || ""}
+              initialNoticeDoc={channelInfo?.orgData?.notice_doc}
+              canEdit={data.isManagerOrCreatorOfMe}
+              onPublish={async ({ notice, noticeDoc }) => {
+                try {
+                  await updateGroupAnnouncement(channel, {
+                    notice,
+                    noticeDoc,
+                  });
+                  await fetchCurrentImChannelInfo(channel);
+                } catch (error: any) {
+                  Toast.error(error?.msg || error?.message);
+                  throw error;
+                }
+              }}
+            />,
+            new RouteContextConfig({
+              title: t("base.module.channelSettings.groupNotice"),
+              headerAction: data.isManagerOrCreatorOfMe ? (
+                <WKButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => announcementPageRef.current?.openEditor()}
+                >
+                  {t("base.common.edit")}
+                </WKButton>
+              ) : undefined,
+            })
+          );
         },
-        onSave: (value: string) =>
-          updateChannelSettingField({
-            channel,
-            field: ChannelField.notice,
-            value,
-          }).catch((error) => {
-            Toast.error(error.msg);
-            return false;
-          }),
       },
     }),
   ];

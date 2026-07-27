@@ -79,6 +79,7 @@ import {
 import WebhookIssuePreviewPanel from "../../features/webhookMessagePreview/WebhookIssuePreviewPanel";
 import type { WebhookIssuePreviewTarget } from "../../bridge/message/webhookPreview";
 import { closeChatRightPanels, openChatRightPanel } from "./rightPanelState";
+import type { GroupAnnouncementViewModel } from "../../features/groupAnnouncement/announcementModel";
 
 // 消息 ACK 只代表发送成功；后端把归档子区恢复为活跃存在短暂异步窗口。
 // 实测立即 threadGet 可能仍返回 Archived，因此发送后用短轮询等后端状态落稳。
@@ -282,6 +283,7 @@ export class ChatContentPage extends Component<
 
   channelInfoListener!: ChannelInfoListener;
   conversationContext!: ConversationContext;
+  private channelSettingRef = React.createRef<ChannelSetting>();
   private parentGroupChannel?: Channel;
   private channelSearchDataSourceKey = "";
   private channelSearchDataSource?: ChannelSearchDataSource;
@@ -310,6 +312,20 @@ export class ChatContentPage extends Component<
       webhookIssuePreviewTarget: null,
     };
   }
+
+  private _openGroupAnnouncement = (
+    announcement: GroupAnnouncementViewModel
+  ) => {
+    this._clearChannelSearchState();
+    this.setState(
+      openChatRightPanel("channelSetting"),
+      () => {
+        this.channelSettingRef.current?.openGroupAnnouncementPreview(
+          announcement
+        );
+      }
+    );
+  };
 
   private _openWebhookPreview = (target: WebhookIssuePreviewTarget) => {
     this._clearChannelSearchState();
@@ -1111,6 +1127,7 @@ export class ChatContentPage extends Component<
                   }
                 }}
                 onOpenWebhookPreview={this._openWebhookPreview}
+                onOpenGroupAnnouncement={this._openGroupAnnouncement}
                 key={channel.getChannelKey()}
                 chatBg={
                   WKApp.config.themeMode === ThemeMode.dark
@@ -1133,6 +1150,7 @@ export class ChatContentPage extends Component<
         <div className={classNames("wk-chat-channelsetting")}>
           <ErrorBoundary moduleName={t("base.chatPage.channelSettings")}>
             <ChannelSetting
+              ref={this.channelSettingRef}
               conversationContext={this.conversationContext}
               key={channel.getChannelKey()}
               channel={channel}

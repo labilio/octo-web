@@ -17,7 +17,7 @@ export interface WKViewQueueContext {
     replace(view: JSX.Element): void
     push(view: JSX.Element): void
     pushToFirst(view: JSX.Element): void
-    pop(): void
+    pop(): boolean
     popToRoot(): void
     viewCount():number
 
@@ -46,6 +46,7 @@ export interface WKViewQueueState {
 
 export default class WKViewQueue extends Component<WKViewQueueProps, WKViewQueueState> implements WKViewQueueContext {
     private routeListeners: VoidFunction[] = []
+    private popInProgress = false
     constructor(props: WKViewQueueProps) {
         super(props)
         this.state = {
@@ -71,6 +72,7 @@ export default class WKViewQueue extends Component<WKViewQueueProps, WKViewQueue
         const { status } = this.state
         if(status === WKViewQueueStatus.Pop) {
             this.poped()
+            return
         }
 
         this.setState({
@@ -115,9 +117,12 @@ export default class WKViewQueue extends Component<WKViewQueueProps, WKViewQueue
             this.notifyRouteChange()
         })
     }
-    pop(): void {
+    pop(): boolean {
+        if (this.popInProgress || this.state.queues.length === 0) {
+            return false
+        }
+        this.popInProgress = true
         this.setState((prevState) => {
-            if (prevState.queues.length === 0) return null;
             return {
                 status: WKViewQueueStatus.Pop,
                 viewCount: prevState.queues.length - 1,
@@ -125,17 +130,21 @@ export default class WKViewQueue extends Component<WKViewQueueProps, WKViewQueue
         }, () => {
             this.notifyRouteChange();
         });
+        return true
     }
 
     poped() {
         this.setState((prevState) => ({
             queues: prevState.queues.slice(0, -1),
+            status: WKViewQueueStatus.Normal,
         }), () => {
+            this.popInProgress = false
             this.notifyRouteChange();
         });
     }
 
     popToRoot(): void {
+        this.popInProgress = false
         this.setState({
             queues:  [],
             viewCount: 0,

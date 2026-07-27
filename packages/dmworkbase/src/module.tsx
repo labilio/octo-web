@@ -19,6 +19,7 @@ import { Howl, Howler } from "howler";
 import WKApp, { FriendApply, FriendApplyState, ThemeMode } from "./App";
 import { isChannelSearchEnabled } from "./features/channelSearch/feature";
 import ChatSearchEntryButton from "./features/channelSearch/ChatSearchEntryButton";
+import { resolveGroupAnnouncement } from "./features/groupAnnouncement/announcementModel";
 import { ChannelSettingRouteData } from "./Components/ChannelSetting/context";
 import { InputEdit } from "./Components/InputEdit";
 import { ListItem, ListItemTip } from "./Components/ListItem";
@@ -593,8 +594,16 @@ export default class BaseModule implements IModule {
       }
 
       if (this.allowNotify(message)) {
+        const announcement = resolveGroupAnnouncement({
+          fromUID: message.fromUID,
+          systemUID: WKApp.config.systemUID,
+          contentType: message.contentType,
+          payload: (message.content as any)?.content,
+        });
         let from = "";
-        if (message.channel.channelType === ChannelTypeGroup) {
+        if (announcement) {
+          from = `${announcement.operatorName}: `;
+        } else if (message.channel.channelType === ChannelTypeGroup) {
           const fromChannelInfo = getCurrentImChannelInfo(
             new Channel(message.fromUID, ChannelTypePerson)
           );
@@ -604,7 +613,7 @@ export default class BaseModule implements IModule {
         }
         this.sendNotification(
           message,
-          `${from}${message.content.conversationDigest}`
+          `${from}${announcement?.notice || message.content.conversationDigest}`
         );
         this.tipsAudio();
       }
@@ -704,8 +713,18 @@ export default class BaseModule implements IModule {
       // 用户关闭了通知
       return false;
     }
-    if (isCurrentImSystemMessage(message.contentType)) {
+    const announcement = resolveGroupAnnouncement({
+      fromUID: message.fromUID,
+      systemUID: WKApp.config.systemUID,
+      contentType: message.contentType,
+      payload: (message.content as any)?.content,
+    });
+    if (isCurrentImSystemMessage(message.contentType) && !announcement) {
       // 系统消息不发通知
+      return false;
+    }
+    if (announcement?.operatorUID === WKApp.loginInfo.uid) {
+      // 自己发布的群公告不在自己的设备上响铃
       return false;
     }
     if (message.fromUID === WKApp.loginInfo.uid) {

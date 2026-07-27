@@ -52,6 +52,14 @@
   padding-left: var(--wk-sp-5, 20px);
 }
 
+.wk-interactive-card-md ul {
+  list-style-type: disc;
+}
+
+.wk-interactive-card-md ol {
+  list-style-type: decimal;
+}
+
 .wk-interactive-card-md a {
   color: var(--wk-text-accent, var(--wk-brand-primary));
   text-decoration: none;

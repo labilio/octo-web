@@ -111,6 +111,10 @@ body[theme-mode=dark] .wk-list-item-title{
     word-wrap:break-word;
 }
 
+.wk-list-item-subtitle-muliteline.wk-list-item-subtitle-oneline {
+    white-space: nowrap;
+}
+
 .wk-list-item-arrow {
     margin-right: -10px;
 }

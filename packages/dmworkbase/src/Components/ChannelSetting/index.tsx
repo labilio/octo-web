@@ -13,6 +13,9 @@ import ConversationContext from "../Conversation/context";
 import { ChannelTypeCustomerService } from "../../Service/Const";
 import { I18nContext } from "../../i18n";
 import { getCurrentImChannelInfo } from "../../im-runtime/currentChannelRuntime";
+import { GroupAnnouncementPage } from "../../features/groupAnnouncement/GroupAnnouncementPage";
+import type { GroupAnnouncementViewModel } from "../../features/groupAnnouncement/announcementModel";
+import { RouteContextConfig } from "../../Service/Context";
 
 export interface ChannelSettingProps {
     onClose?: () => void
@@ -23,6 +26,7 @@ export interface ChannelSettingProps {
 export default class ChannelSetting extends Component<ChannelSettingProps> {
     static contextType = I18nContext
     declare context: React.ContextType<typeof I18nContext>
+    private routePageRef = React.createRef<RoutePage>()
 
     subscribers(): Subscriber[] {
         return this.vm.subscribers;
@@ -38,6 +42,30 @@ export default class ChannelSetting extends Component<ChannelSettingProps> {
 
     componentDidMount() {
     }
+
+    openGroupAnnouncementPreview(announcement: GroupAnnouncementViewModel) {
+        const routePage = this.routePageRef.current
+        if (!routePage) {
+            return
+        }
+        routePage.push(
+            <GroupAnnouncementPage
+                context={routePage}
+                initialNotice={announcement.notice}
+                initialNoticeDoc={
+                    announcement.noticeDoc
+                        ? JSON.stringify(announcement.noticeDoc)
+                        : undefined
+                }
+                canEdit={false}
+                onPublish={async () => {}}
+            />,
+            new RouteContextConfig({
+                title: this.context.t("base.module.channelSettings.groupNotice"),
+            })
+        )
+    }
+
     render() {
         const { onClose, channel,conversationContext } = this.props
         return <Provider create={() => {
@@ -55,7 +83,7 @@ export default class ChannelSetting extends Component<ChannelSettingProps> {
                 memberCount = channelInfo.orgData.member_count
             }
            
-            return <RoutePage title={ vm.channel.channelType === ChannelTypeCustomerService
+            return <RoutePage ref={this.routePageRef} title={ vm.channel.channelType === ChannelTypeCustomerService
                 ? this.context.t("base.channelSetting.title")
                 : this.context.t("base.channelSetting.titleWithCount", { values: { count: memberCount } })
             } onClose={() => {

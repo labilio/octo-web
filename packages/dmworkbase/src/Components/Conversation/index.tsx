@@ -119,6 +119,7 @@ import {
 import { isMessageSelectable } from "../../Service/messageSelection";
 import { isIncomingWebhookSender } from "../../Service/IncomingWebhook";
 import type { WebhookIssuePreviewTarget } from "../../bridge/message/webhookPreview";
+import type { GroupAnnouncementViewModel } from "../../features/groupAnnouncement/announcementModel";
 import { I18nContext, t } from "../../i18n";
 import {
   buildRichTextMixedCandidate,
@@ -270,6 +271,9 @@ export interface ConversationProps {
   onContext?: (ctx: ConversationContext) => void;
   onOpenThreadPanel?: (threadChannelId: string, threadName: string) => void;
   onOpenWebhookPreview?: (target: WebhookIssuePreviewTarget) => void;
+  onOpenGroupAnnouncement?: (
+    announcement: GroupAnnouncementViewModel
+  ) => void;
   onSelectionStateChange?: (state: {
     editOn: boolean;
     checkedCount: number;
@@ -355,6 +359,9 @@ export class Conversation
     threadName: string
   ) => void;
   private onOpenWebhookPreview?: (target: WebhookIssuePreviewTarget) => void;
+  private onOpenGroupAnnouncement?: (
+    announcement: GroupAnnouncementViewModel
+  ) => void;
 
   constructor(props: any) {
     super(props);
@@ -364,6 +371,7 @@ export class Conversation
     };
     this.onOpenThreadPanel = props.onOpenThreadPanel;
     this.onOpenWebhookPreview = props.onOpenWebhookPreview;
+    this.onOpenGroupAnnouncement = props.onOpenGroupAnnouncement;
     this._beforeUnloadHandler = () => {
       // Use sendBeacon for reliable delivery during page unload
       if (this.vm && this.vm.needSetUnread) {
@@ -467,6 +475,9 @@ export class Conversation
   }
   openWebhookPreview(target: WebhookIssuePreviewTarget): void {
     this.onOpenWebhookPreview?.(target);
+  }
+  openGroupAnnouncement(announcement: GroupAnnouncementViewModel): void {
+    this.onOpenGroupAnnouncement?.(announcement);
   }
   getActivePreviewMessageId(): string | null {
     return this.props.activePreviewMessageId ?? null;
