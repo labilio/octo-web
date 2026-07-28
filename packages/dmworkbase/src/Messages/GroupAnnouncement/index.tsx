@@ -39,7 +39,10 @@ interface GroupAnnouncementMessageProps {
 
 function useOperatorOnlineStatus(operatorUID: string): boolean {
   const [, setRevision] = useState(0);
-  const refresh = useCallback(() => setRevision((value) => value + 1), []);
+  const refresh = useCallback(
+    () => setRevision((value: number) => value + 1),
+    []
+  );
   const operatorChannel = useMemo(
     () => new Channel(operatorUID, ChannelTypePerson),
     [operatorUID]

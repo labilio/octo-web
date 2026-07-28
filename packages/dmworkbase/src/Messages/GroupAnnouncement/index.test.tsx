@@ -4,12 +4,25 @@ import { act } from "react-dom/test-utils";
 import { ChannelTypePerson } from "wukongimjssdk";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+type MockChannelInfo = {
+  channel?: { channelID: string; channelType: number };
+  online: boolean;
+};
+
+type MockChannelInfoListener = (channelInfo: MockChannelInfo) => void;
+
 const channelRuntimeMocks = vi.hoisted(() => ({
-  getImChannelInfo: vi.fn(() => ({
+  getImChannelInfo: vi.fn<
+    (_sdk: unknown, _channel: unknown) => MockChannelInfo | undefined
+  >(() => ({
     online: true,
   })),
-  fetchImChannelInfo: vi.fn(),
-  addImChannelInfoListener: vi.fn(() => () => {}),
+  fetchImChannelInfo: vi.fn<
+    (_sdk: unknown, _channel: unknown) => Promise<unknown>
+  >(),
+  addImChannelInfoListener: vi.fn<
+    (_sdk: unknown, _listener: MockChannelInfoListener) => () => void
+  >(() => () => {}),
 }));
 
 vi.mock("../../App", () => ({
@@ -176,12 +189,7 @@ describe("GroupAnnouncementMessage", () => {
   });
 
   it("updates the operator online indicator when channel info changes", async () => {
-    let channelInfoListener:
-      | ((channelInfo: {
-          channel: { channelID: string; channelType: number };
-          online: boolean;
-        }) => void)
-      | undefined;
+    let channelInfoListener: MockChannelInfoListener | undefined;
     channelRuntimeMocks.getImChannelInfo.mockReturnValue({
       online: false,
     });
