@@ -1,7 +1,16 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { act } from "react-dom/test-utils";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { ChannelTypePerson } from "wukongimjssdk";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const channelRuntimeMocks = vi.hoisted(() => ({
+  getImChannelInfo: vi.fn(() => ({
+    online: true,
+  })),
+  fetchImChannelInfo: vi.fn(),
+  addImChannelInfoListener: vi.fn(() => () => {}),
+}));
 
 vi.mock("../../App", () => ({
   default: {
@@ -14,10 +23,21 @@ vi.mock("../../App", () => ({
 }));
 
 vi.mock("../../ui/message/MessageRow", () => ({
-  default: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
+  default: ({
+    children,
+    isOnline,
+  }: {
+    children: React.ReactNode;
+    isOnline?: boolean;
+  }) => (
+    <div>
+      {isOnline && <span className="wk-msg-avatar-online-dot" />}
+      {children}
+    </div>
   ),
 }));
+
+vi.mock("../../im-runtime/channelRuntime", () => channelRuntimeMocks);
 
 vi.mock("../../i18n", () => ({
   useI18n: () => ({
@@ -38,6 +58,18 @@ import { GroupAnnouncementMessage } from ".";
 
 describe("GroupAnnouncementMessage", () => {
   let container: HTMLDivElement | undefined;
+
+  beforeEach(() => {
+    channelRuntimeMocks.getImChannelInfo.mockReset();
+    channelRuntimeMocks.getImChannelInfo.mockReturnValue({
+      online: true,
+    });
+    channelRuntimeMocks.fetchImChannelInfo.mockReset();
+    channelRuntimeMocks.addImChannelInfoListener.mockReset();
+    channelRuntimeMocks.addImChannelInfoListener.mockImplementation(
+      () => () => {}
+    );
+  });
 
   afterEach(() => {
     if (container) {
@@ -110,6 +142,98 @@ describe("GroupAnnouncementMessage", () => {
     expect(card.querySelector("ul")).not.toBeNull();
     expect(card.textContent).toContain("First");
     expect(card.textContent).toContain("Second");
+  });
+
+  it("shows the operator online indicator when the operator is online", async () => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+
+    await act(async () => {
+      ReactDOM.render(
+        <GroupAnnouncementMessage
+          message={{ timestamp: 1 } as any}
+          context={
+            {
+              editOn: () => false,
+              onTapAvatar: () => {},
+              showUser: () => {},
+            } as any
+          }
+          announcement={{
+            notice: "Important",
+            operatorUID: "alice",
+            operatorName: "Alice",
+          }}
+        />,
+        container
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(
+      container.querySelector(".wk-msg-avatar-online-dot")
+    ).not.toBeNull();
+  });
+
+  it("updates the operator online indicator when channel info changes", async () => {
+    let channelInfoListener:
+      | ((channelInfo: {
+          channel: { channelID: string; channelType: number };
+          online: boolean;
+        }) => void)
+      | undefined;
+    channelRuntimeMocks.getImChannelInfo.mockReturnValue({
+      online: false,
+    });
+    channelRuntimeMocks.addImChannelInfoListener.mockImplementation(
+      (_sdk, listener) => {
+        channelInfoListener = listener;
+        return () => {};
+      }
+    );
+    container = document.createElement("div");
+    document.body.appendChild(container);
+
+    await act(async () => {
+      ReactDOM.render(
+        <GroupAnnouncementMessage
+          message={{ timestamp: 1 } as any}
+          context={
+            {
+              editOn: () => false,
+              onTapAvatar: () => {},
+              showUser: () => {},
+            } as any
+          }
+          announcement={{
+            notice: "Important",
+            operatorUID: "alice",
+            operatorName: "Alice",
+          }}
+        />,
+        container
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(container.querySelector(".wk-msg-avatar-online-dot")).toBeNull();
+
+    channelRuntimeMocks.getImChannelInfo.mockReturnValue({
+      online: true,
+    });
+    act(() => {
+      channelInfoListener?.({
+        channel: {
+          channelID: "alice",
+          channelType: ChannelTypePerson,
+        },
+        online: true,
+      });
+    });
+
+    expect(
+      container.querySelector(".wk-msg-avatar-online-dot")
+    ).not.toBeNull();
   });
 
   it("opens the full announcement instead of expanding the chat card", async () => {

@@ -119,7 +119,10 @@ import {
 import { isMessageSelectable } from "../../Service/messageSelection";
 import { isIncomingWebhookSender } from "../../Service/IncomingWebhook";
 import type { WebhookIssuePreviewTarget } from "../../bridge/message/webhookPreview";
-import type { GroupAnnouncementViewModel } from "../../features/groupAnnouncement/announcementModel";
+import {
+  resolveGroupAnnouncement,
+  type GroupAnnouncementViewModel,
+} from "../../features/groupAnnouncement/announcementModel";
 import { I18nContext, t } from "../../i18n";
 import {
   buildRichTextMixedCandidate,
@@ -2074,12 +2077,19 @@ export class Conversation
     } else {
       MessageCell = WKApp.messageManager.getCell(message.contentType);
     }
+    const announcement = resolveGroupAnnouncement({
+      fromUID: message.fromUID,
+      systemUID: WKApp.config.systemUID,
+      contentType: message.contentType,
+      payload: (message.content as { content?: unknown })?.content,
+    });
     const isSystemMessage =
       message.revoke ||
-      message.contentType === MessageContentTypeConst.screenshot ||
-      (message.contentType >= 1000 &&
-        message.contentType <= 2000 &&
-        message.contentType !== MessageContentTypeConst.threadCreated);
+      (!announcement &&
+        (message.contentType === MessageContentTypeConst.screenshot ||
+          (message.contentType >= 1000 &&
+            message.contentType <= 2000 &&
+            message.contentType !== MessageContentTypeConst.threadCreated)));
     return (
       <div
         onAnimationEnd={() => {

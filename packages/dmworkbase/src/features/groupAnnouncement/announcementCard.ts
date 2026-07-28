@@ -86,7 +86,7 @@ export function buildGroupAnnouncementCard({
       {
         type: "TextBlock",
         text: title,
-        size: "Medium",
+        size: "Large",
         weight: "Bolder",
         wrap: true,
       },

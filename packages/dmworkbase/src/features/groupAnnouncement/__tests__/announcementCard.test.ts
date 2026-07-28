@@ -84,7 +84,7 @@ describe("buildGroupAnnouncementCard", () => {
         {
           type: "TextBlock",
           text: "Group announcement",
-          size: "Medium",
+          size: "Large",
           weight: "Bolder",
           wrap: true,
         },

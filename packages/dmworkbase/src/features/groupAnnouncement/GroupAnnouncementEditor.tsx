@@ -1,7 +1,7 @@
 import { IconBold, IconList, IconOrderedList } from "@douyinfe/semi-icons";
 import type { Editor } from "@tiptap/core";
 import Placeholder from "@tiptap/extension-placeholder";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import React, { useMemo, useState } from "react";
 
@@ -109,6 +109,18 @@ export function GroupAnnouncementEditor({
       setNotice(serializeAnnouncementPlainText(document));
     },
   });
+  const activeFormats = useEditorState({
+    editor,
+    selector: ({ editor: currentEditor }) => ({
+      bold: currentEditor?.isActive("bold") ?? false,
+      orderedList: currentEditor?.isActive("orderedList") ?? false,
+      bulletList: currentEditor?.isActive("bulletList") ?? false,
+    }),
+  }) ?? {
+    bold: false,
+    orderedList: false,
+    bulletList: false,
+  };
 
   const characterCount = Array.from(notice).length;
   const isOverLimit = characterCount > GROUP_ANNOUNCEMENT_MAX_CHARACTERS;
@@ -131,6 +143,24 @@ export function GroupAnnouncementEditor({
     } finally {
       setPublishing(false);
     }
+  };
+
+  const handleFormattingKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>
+  ) => {
+    if (
+      !editor ||
+      event.altKey ||
+      event.shiftKey ||
+      (!event.ctrlKey && !event.metaKey) ||
+      event.key.toLowerCase() !== "z"
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    editor.chain().focus().undo().run();
   };
 
   return (
@@ -160,7 +190,10 @@ export function GroupAnnouncementEditor({
       {editable && (
         <>
           <div className="wk-group-announcement-editor__toolbar">
-            <div className="wk-group-announcement-editor__formatting">
+            <div
+              className="wk-group-announcement-editor__formatting"
+              onKeyDown={handleFormattingKeyDown}
+            >
               <WKButton
                 aria-label={t("base.groupAnnouncement.editor.bold")}
                 title={t("base.groupAnnouncement.editor.bold")}
@@ -168,7 +201,7 @@ export function GroupAnnouncementEditor({
                 size="sm"
                 iconOnly
                 className={
-                  editor?.isActive("bold")
+                  activeFormats.bold
                     ? "wk-group-announcement-editor__tool--active"
                     : undefined
                 }
@@ -183,7 +216,7 @@ export function GroupAnnouncementEditor({
                 size="sm"
                 iconOnly
                 className={
-                  editor?.isActive("orderedList")
+                  activeFormats.orderedList
                     ? "wk-group-announcement-editor__tool--active"
                     : undefined
                 }
@@ -200,7 +233,7 @@ export function GroupAnnouncementEditor({
                 size="sm"
                 iconOnly
                 className={
-                  editor?.isActive("bulletList")
+                  activeFormats.bulletList
                     ? "wk-group-announcement-editor__tool--active"
                     : undefined
                 }

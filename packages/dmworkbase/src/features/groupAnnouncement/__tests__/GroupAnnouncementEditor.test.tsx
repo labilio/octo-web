@@ -66,6 +66,33 @@ describe("GroupAnnouncementEditor", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
 
+  async function selectTextNode(node: Node) {
+    const editorElement = container?.querySelector(
+      '.tiptap[contenteditable="true"]'
+    );
+    const selection = document.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(node);
+    Object.defineProperty(range, "getClientRects", {
+      value: () => [],
+    });
+    Object.defineProperty(range, "getBoundingClientRect", {
+      value: () => ({
+        bottom: 0,
+        height: 0,
+        left: 0,
+        right: 0,
+        top: 0,
+        width: 0,
+      }),
+    });
+    (editorElement as HTMLElement).focus();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    document.dispatchEvent(new Event("selectionchange"));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
   it("renders the full announcement without editing controls for members", async () => {
     await renderEditor(false);
 
@@ -130,6 +157,160 @@ describe("GroupAnnouncementEditor", () => {
     ).toBe("16/400");
   });
 
+  it("keeps the bold button synchronized with the selected text", async () => {
+    await renderEditor(true, {
+      initialNotice: "Plain Bold",
+      initialNoticeDoc: JSON.stringify({
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              { type: "text", text: "Plain " },
+              {
+                type: "text",
+                marks: [{ type: "bold" }],
+                text: "Bold",
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    const textNodes = container?.querySelector(".tiptap p")?.childNodes;
+    const boldButton = container?.querySelector(
+      'button[aria-label="base.groupAnnouncement.editor.bold"]'
+    );
+
+    await selectTextNode(textNodes?.[1] as Node);
+    expect(boldButton?.classList).toContain(
+      "wk-group-announcement-editor__tool--active"
+    );
+
+    await selectTextNode(textNodes?.[0] as Node);
+    expect(boldButton?.classList).not.toContain(
+      "wk-group-announcement-editor__tool--active"
+    );
+  });
+
+  it("undoes toolbar formatting with Ctrl+Z when a formatting control has focus", async () => {
+    await renderEditor(true, { initialNotice: "Plain" });
+
+    const editorElement = container?.querySelector(
+      '.tiptap[contenteditable="true"]'
+    );
+    const textNode = editorElement?.querySelector("p")?.firstChild;
+    const boldButton = container?.querySelector(
+      'button[aria-label="base.groupAnnouncement.editor.bold"]'
+    );
+
+    await selectTextNode(textNode as Node);
+    boldButton?.dispatchEvent(
+      new MouseEvent("click", { bubbles: true, cancelable: true })
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(editorElement?.querySelector("strong")?.textContent).toBe("Plain");
+
+    Object.defineProperty(Range.prototype, "getClientRects", {
+      configurable: true,
+      value: () => [],
+    });
+    Object.defineProperty(Range.prototype, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 0,
+        height: 0,
+        left: 0,
+        right: 0,
+        top: 0,
+        width: 0,
+      }),
+    });
+    (boldButton as HTMLButtonElement).focus();
+    boldButton?.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "z",
+        code: "KeyZ",
+        ctrlKey: true,
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(editorElement?.querySelector("strong")).toBeNull();
+    expect(editorElement?.textContent).toBe("Plain");
+  });
+
+  it("keeps the list buttons synchronized with the selected list item", async () => {
+    await renderEditor(true, {
+      initialNotice: "Plain\nBullet\nOrdered",
+      initialNoticeDoc: JSON.stringify({
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Plain" }],
+          },
+          {
+            type: "bulletList",
+            content: [
+              {
+                type: "listItem",
+                content: [
+                  {
+                    type: "paragraph",
+                    content: [{ type: "text", text: "Bullet" }],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: "orderedList",
+            content: [
+              {
+                type: "listItem",
+                content: [
+                  {
+                    type: "paragraph",
+                    content: [{ type: "text", text: "Ordered" }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    const bulletButton = container?.querySelector(
+      'button[aria-label="base.groupAnnouncement.editor.bulletList"]'
+    );
+    const orderedButton = container?.querySelector(
+      'button[aria-label="base.groupAnnouncement.editor.orderedList"]'
+    );
+    const bulletText = container?.querySelector("ul li p")?.firstChild;
+    const orderedText = container?.querySelector("ol li p")?.firstChild;
+
+    await selectTextNode(bulletText as Node);
+    expect(bulletButton?.classList).toContain(
+      "wk-group-announcement-editor__tool--active"
+    );
+    expect(orderedButton?.classList).not.toContain(
+      "wk-group-announcement-editor__tool--active"
+    );
+
+    await selectTextNode(orderedText as Node);
+    expect(orderedButton?.classList).toContain(
+      "wk-group-announcement-editor__tool--active"
+    );
+    expect(bulletButton?.classList).not.toContain(
+      "wk-group-announcement-editor__tool--active"
+    );
+  });
+
   it("removes a list item when all of its text is selected and deleted", async () => {
     await renderEditor(true, {
       initialNotice: "First\nSecond\nThird",
@@ -161,27 +342,7 @@ describe("GroupAnnouncementEditor", () => {
 
     expect(secondItemText?.textContent).toBe("Second");
 
-    const selection = document.getSelection();
-    const range = document.createRange();
-    range.selectNodeContents(secondItemText as Node);
-    Object.defineProperty(range, "getClientRects", {
-      value: () => [],
-    });
-    Object.defineProperty(range, "getBoundingClientRect", {
-      value: () => ({
-        bottom: 0,
-        height: 0,
-        left: 0,
-        right: 0,
-        top: 0,
-        width: 0,
-      }),
-    });
-    (editorElement as HTMLElement).focus();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-    document.dispatchEvent(new Event("selectionchange"));
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await selectTextNode(secondItemText as Node);
 
     editorElement?.dispatchEvent(
       new KeyboardEvent("keydown", {

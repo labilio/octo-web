@@ -1,5 +1,18 @@
 import { IconChevronRight } from "@douyinfe/semi-icons";
-import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import WKSDK, {
+  Channel,
+  ChannelInfo,
+  ChannelInfoListener,
+  ChannelTypePerson,
+} from "wukongimjssdk";
 
 import WKApp from "../../App";
 import WKButton from "../../Components/WKButton";
@@ -9,6 +22,11 @@ import { formatMessageTimestamp } from "../../Utils/time";
 import { GroupAnnouncementViewModel } from "../../features/groupAnnouncement/announcementModel";
 import { buildGroupAnnouncementCard } from "../../features/groupAnnouncement/announcementCard";
 import { useI18n } from "../../i18n";
+import {
+  addImChannelInfoListener,
+  fetchImChannelInfo,
+  getImChannelInfo,
+} from "../../im-runtime/channelRuntime";
 import MessageRow from "../../ui/message/MessageRow";
 import { OctoCardView } from "../InteractiveCard";
 import "./index.css";
@@ -17,6 +35,35 @@ interface GroupAnnouncementMessageProps {
   message: MessageWrap;
   context: ConversationContext;
   announcement: GroupAnnouncementViewModel;
+}
+
+function useOperatorOnlineStatus(operatorUID: string): boolean {
+  const [, setRevision] = useState(0);
+  const refresh = useCallback(() => setRevision((value) => value + 1), []);
+  const operatorChannel = useMemo(
+    () => new Channel(operatorUID, ChannelTypePerson),
+    [operatorUID]
+  );
+
+  useEffect(() => {
+    const sdk = WKSDK.shared();
+    if (!getImChannelInfo(sdk, operatorChannel)) {
+      void fetchImChannelInfo(sdk, operatorChannel);
+    }
+
+    const listener: ChannelInfoListener = (channelInfo: ChannelInfo) => {
+      const channel = channelInfo?.channel;
+      if (
+        channel?.channelID === operatorChannel.channelID &&
+        channel.channelType === operatorChannel.channelType
+      ) {
+        refresh();
+      }
+    };
+    return addImChannelInfoListener(sdk, listener);
+  }, [operatorChannel, refresh]);
+
+  return getImChannelInfo(WKSDK.shared(), operatorChannel)?.online === true;
 }
 
 function GroupAnnouncementBody({
@@ -91,6 +138,7 @@ export function GroupAnnouncementMessage({
   announcement,
 }: GroupAnnouncementMessageProps) {
   const actorUID = announcement.operatorUID;
+  const isOperatorOnline = useOperatorOnlineStatus(actorUID);
   return (
     <MessageRow
       isSend={actorUID === WKApp.loginInfo.uid}
@@ -100,7 +148,7 @@ export function GroupAnnouncementMessage({
       avatarUrl={WKApp.shared.avatarUser(actorUID)}
       senderName={announcement.operatorName}
       timestamp={formatMessageTimestamp(message.timestamp)}
-      isOnline={false}
+      isOnline={isOperatorOnline}
       selectionMode={context.editOn()}
       onAvatarClick={(event) => context.onTapAvatar(actorUID, event)}
       onSenderNameClick={() => context.showUser(actorUID)}
