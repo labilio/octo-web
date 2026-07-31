@@ -13,7 +13,13 @@ import {
 import { IconEdit, IconSend, IconClock, IconTick, IconClose, IconInfoCircle, IconHistory, IconRefresh, IconUser, IconPlus, IconMinusCircle, IconExit, IconDelete, IconMore } from "@douyinfe/semi-icons";
 import { Bot, ChevronDown, Check, X } from "lucide-react";
 import { Channel, MessageText } from "wukongimjssdk";
-import { I18nContext, t, ForwardService, interpretForwardResult } from "@octo/base";
+import {
+  I18nContext,
+  t,
+  ForwardService,
+  interpretForwardResult,
+  titleContextStore,
+} from "@octo/base";
 import WKApp from "@octo/base/src/App";
 import VoiceInputButton from "@octo/base/src/Components/VoiceInputButton";
 import type { ReplaceMode, SelectionRange } from "@octo/base/src/Components/VoiceInputButton";
@@ -173,6 +179,7 @@ function AbstractCallout({ abstract, title }: { abstract?: string; title: string
 export default class SummaryDetailPage extends Component<SummaryDetailPageProps, SummaryDetailPageState> {
     static contextType = I18nContext;
     declare context: React.ContextType<typeof I18nContext>;
+  private readonly titleContextOwner = Symbol("summary-title-context");
 
     private regenerateTopicRef = React.createRef<HTMLTextAreaElement>();
     private contentScrollRef = React.createRef<HTMLDivElement>();
@@ -336,6 +343,9 @@ export default class SummaryDetailPage extends Component<SummaryDetailPageProps,
         const prevTaskId = prevProps.taskId;
         const currentTaskId = this.detailLookupId;
         if (prevTaskId !== currentTaskId && currentTaskId != null) {
+      if (this.props.emitSelection) {
+        titleContextStore.clear("summary", this.titleContextOwner);
+      }
             this.listPageActive = false;
             this.clearAllTimers();
             // Blocking 5：切 task 立即清空上一 task 的 schedule 状态，避免在新 detail
@@ -393,6 +403,9 @@ export default class SummaryDetailPage extends Component<SummaryDetailPageProps,
     };
 
     componentWillUnmount() {
+    if (this.props.emitSelection) {
+      titleContextStore.clear("summary", this.titleContextOwner);
+    }
         this.unmounted = true;
         this.teardownTocObserver();
         if (this.layoutResizeObserver) {
@@ -613,6 +626,7 @@ export default class SummaryDetailPage extends Component<SummaryDetailPageProps,
                 lastKnownStatus: detail.status,
                 workflowGateContent: false,
             });
+      this.publishDetailTitle(detail);
             if (detail.status === TaskStatus.COMPLETED && detail.result_id) {
                 const markRead = api.markSummaryRead;
                 if (markRead) void markRead(detail.task_id, { team_result_id: detail.result_id }).then((attention) => {
@@ -678,6 +692,21 @@ export default class SummaryDetailPage extends Component<SummaryDetailPageProps,
             this.setState({ error: err.message || t("summary.common.loadingFailed"), loading: false });
         }
     }
+
+  private publishDetailTitle(detail: SummaryDetail): void {
+    if (!this.props.emitSelection) return;
+    const primaryTitle =
+      deriveSummaryDisplayContent(detail.topic || detail.title || "") ||
+      t("summary.detail.defaultTitle");
+    const moduleTitle =
+      WKApp.menus.menusList().find((menu) => menu.id === "summary")?.title ||
+      t("summary.menu.title");
+    titleContextStore.set(
+      "summary",
+      { primaryTitle, moduleTitle },
+      this.titleContextOwner
+    );
+  }
 
     /**
      * Blocking 5（async race）：只有当发起请求时捕获的 seq 与当前 seq 一致、

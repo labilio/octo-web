@@ -48,6 +48,7 @@ import {
     setImChannelSubscribersCache,
     syncImChannelSubscribers,
 } from "../../im-runtime/channelRuntime";
+import { getBrowserUnreadConversationSync } from "../../features/documentTitle";
 
 export interface FoldSessionParticipant {
     uid: string
@@ -1640,7 +1641,21 @@ export default class ConversationVM extends ProviderListener {
         if (oldUnreadCount != this.unreadCount) {
             const conversation = WKSDK.shared().conversationManager.findConversation(this.channel)
             if (conversation) {
-                conversation.unread = this.unreadCount
+        conversation.unread = this.unreadCount;
+        if (
+          WKApp.shared.currentSpaceId &&
+          conversation.channel.channelType === ChannelTypePerson &&
+          conversation.extra?.spaceUnread !== undefined
+        ) {
+          conversation.extra.spaceUnread = this.unreadCount;
+        }
+        getBrowserUnreadConversationSync().publish({
+          accountId: WKApp.loginInfo.uid,
+          spaceId: WKApp.shared.currentSpaceId || "",
+          channelId: conversation.channel.channelID,
+          channelType: conversation.channel.channelType,
+          unread: this.unreadCount,
+        });
             }
             // 未读清零时：先持久化到服务端，成功后再通知监听者 + 刷新 sidebar 快照（#203）。
             // markConversationUnread 是异步 HTTP PUT，必须 await 确保 /sidebar/sync 读到

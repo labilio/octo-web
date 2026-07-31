@@ -119,7 +119,13 @@ import { SummaryCardContent } from "./Messages/SummaryCard/SummaryCardContent";
 import { SummaryCardCell } from "./Messages/SummaryCard";
 import { DocumentShareCardContent } from "./Messages/DocumentShareCard/DocumentShareCardContent";
 import { DocumentShareCardCell } from "./Messages/DocumentShareCard";
-import { parseThreadChannelId } from "./Service/Thread";
+import { isEffectivelyMuted, parseThreadChannelId } from "./Service/Thread";
+import {
+  getBrowserSingleAlertCoordinator,
+  isMessageElementVisible,
+  shouldSuppressImmediateAlert,
+} from "./features/notifications";
+
 import { canShowRevokeMenu } from "./Service/revokePermission";
 import {
   addCurrentImChannelInfoListener,
@@ -159,6 +165,8 @@ import {
   buildThreadActionsSection,
   buildThreadOverviewSection,
 } from "./features/channelSetting/channelSettingThreadSections";
+
+const CROSS_TAB_VISIBLE_CLAIM_DELAY_MS = 120;
 
 /** execCommand 降级复制，用于 navigator.clipboard 不可用的场景 */
 function fallbackCopy(text: string) {
@@ -592,22 +600,7 @@ export default class BaseModule implements IModule {
           break;
       }
 
-      if (this.allowNotify(message)) {
-        let from = "";
-        if (message.channel.channelType === ChannelTypeGroup) {
-          const fromChannelInfo = getCurrentImChannelInfo(
-            new Channel(message.fromUID, ChannelTypePerson)
-          );
-          if (fromChannelInfo) {
-            from = `${fromChannelInfo?.orgData.displayName}: `;
-          }
-        }
-        this.sendNotification(
-          message,
-          `${from}${message.content.conversationDigest}`
-        );
-        this.tipsAudio();
-      }
+      this.scheduleMessageAttention(message);
     });
 
     addCurrentImChannelInfoListener((channelInfo: ChannelInfo) => {
@@ -699,6 +692,82 @@ export default class BaseModule implements IModule {
     }
   }
 
+  private scheduleMessageAttention(message: Message): void {
+    const needsRenderedMessageCheck =
+      WKApp.currentMenuId === "chat" &&
+      document.visibilityState === "visible" &&
+      document.hasFocus() &&
+      !!WKApp.shared.openChannel?.isEqual(message.channel) &&
+      typeof requestAnimationFrame === "function";
+    // Wait for the incoming-message render before asking whether this exact message entered
+    // the viewport. An open conversation alone is not enough: users reading history must still
+    // receive attention for a new message below the fold.
+    if (needsRenderedMessageCheck) {
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => void this.processMessageAttention(message))
+      );
+      return;
+    }
+    window.setTimeout(() => void this.processMessageAttention(message), 0);
+  }
+
+  private async processMessageAttention(message: Message): Promise<void> {
+    const coordinator = getBrowserSingleAlertCoordinator();
+    const claim = {
+      accountId: WKApp.loginInfo.uid,
+      messageId: message.messageID || undefined,
+      clientMsgNo: message.clientMsgNo || undefined,
+    };
+    if (this.isIncomingMessageVisible(message)) {
+      // A visible tab claims the message without presenting anything. Other tabs wait briefly
+      // before their atomic claim, so an actively viewed message cannot produce a background
+      // tab's duplicate sound or notification.
+      await coordinator.claimOnly(claim);
+      return;
+    }
+    if (!this.allowNotify(message)) return;
+
+    await new Promise<void>((resolve) => {
+      window.setTimeout(resolve, CROSS_TAB_VISIBLE_CLAIM_DELAY_MS);
+    });
+    if (this.isIncomingMessageVisible(message)) {
+      await coordinator.claimOnly(claim);
+      return;
+    }
+    if (!this.allowNotify(message)) return;
+
+    let from = "";
+    if (message.channel.channelType === ChannelTypeGroup) {
+      const fromChannelInfo = getCurrentImChannelInfo(
+        new Channel(message.fromUID, ChannelTypePerson)
+      );
+      if (fromChannelInfo) {
+        from = `${fromChannelInfo?.orgData.displayName}: `;
+      }
+    }
+    await coordinator.runOnce({
+      ...claim,
+      alert: () => {
+        void this.sendNotification(
+          message,
+          `${from}${message.content.conversationDigest}`
+        );
+        this.tipsAudio();
+      },
+    });
+  }
+
+  private isIncomingMessageVisible(message: Message): boolean {
+    return shouldSuppressImmediateAlert({
+      chatModuleActive: WKApp.currentMenuId === "chat",
+      documentVisible: document.visibilityState === "visible",
+      windowFocused: document.hasFocus(),
+      currentConversation: !!WKApp.shared.openChannel?.isEqual(message.channel),
+      newMessageVisible:
+        message.messageSeq > 0 && isMessageElementVisible(message.messageSeq),
+    });
+  }
+
   allowNotify(message: Message) {
     if (WKApp.shared.notificationIsClose) {
       // 用户关闭了通知
@@ -728,20 +797,17 @@ export default class BaseModule implements IModule {
 
     // 已屏蔽（免打扰）的 channel 不播提示音、不发通知
     const channelInfo = getCurrentImChannelInfo(message.channel);
-    if (channelInfo?.mute) {
-      return false;
-    }
+    const isThread = message.channel.channelType === ChannelTypeCommunityTopic;
     // 子区消息：额外检查父群聊 mute
-    const parentGroupNo = channelInfo?.orgData?.parentGroupNo as
-      | string
-      | undefined;
-    if (parentGroupNo) {
-      const parentChannelInfo = getCurrentImChannelInfo(
-        new Channel(parentGroupNo, ChannelTypeGroup)
-      );
-      if (parentChannelInfo?.mute) {
-        return false;
-      }
+    const parentGroupNo = isThread
+      ? (channelInfo?.orgData?.parentGroupNo as string | undefined) ||
+        parseThreadChannelId(message.channel.channelID)?.groupNo
+      : undefined;
+    const parentChannelInfo = parentGroupNo
+      ? getCurrentImChannelInfo(new Channel(parentGroupNo, ChannelTypeGroup))
+      : undefined;
+    if (isEffectivelyMuted({ isThread, channelInfo, parentChannelInfo })) {
+      return false;
     }
 
     return true;

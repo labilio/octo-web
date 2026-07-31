@@ -98,6 +98,7 @@ import {
 } from "../../Messages/RichText/RichTextContent";
 import { formatMessageTimestamp } from "../../Utils/time";
 import { isSafeUrl } from "../../Utils/security";
+import { shouldMarkConversationRead } from "../../features/notifications";
 import { imageBlockToPasteFile } from "../MessageInput/richTextPaste";
 import { downloadFile } from "../../Utils/download";
 import Lightbox from "yet-another-react-lightbox";
@@ -351,6 +352,12 @@ export class Conversation
   private _consumedComposeIds: Set<string> = new Set();
   private _initialComposeGeneration = 0;
   private _initialComposeMounted = false;
+  private _lastAttentionCheckedMessageSeq = 0;
+  private _attentionRefreshHandler = () => {
+    const run = () => this.updateBrowseToMessageSeqAndReminderDoneIfNeed();
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(run);
+    else window.setTimeout(run, 0);
+  };
   private onOpenThreadPanel?: (
     threadChannelId: string,
     threadName: string
@@ -1353,6 +1360,8 @@ export class Conversation
       this.forceUpdate();
     };
     WKApp.mittBus.on("wk:exit-multiple-mode", this._exitMultipleModeHandler);
+    WKApp.mittBus.on("wk:app-foreground", this._attentionRefreshHandler);
+    WKApp.mittBus.on("wk:active-menu-changed", this._attentionRefreshHandler);
 
     window.addEventListener("beforeunload", this._beforeUnloadHandler);
 
@@ -1419,6 +1428,11 @@ export class Conversation
     if (next && next !== prev) {
       this.tryConsumeInitialCompose();
     }
+    const latestMessageSeq = this.vm.lastMessage?.messageSeq || 0;
+    if (latestMessageSeq > this._lastAttentionCheckedMessageSeq) {
+      this._lastAttentionCheckedMessageSeq = latestMessageSeq;
+      this._attentionRefreshHandler();
+    }
   }
 
   componentWillUnmount() {
@@ -1428,6 +1442,8 @@ export class Conversation
       WKApp.mittBus.off("wk:exit-multiple-mode", this._exitMultipleModeHandler);
       this._exitMultipleModeHandler = undefined;
     }
+    WKApp.mittBus.off("wk:app-foreground", this._attentionRefreshHandler);
+    WKApp.mittBus.off("wk:active-menu-changed", this._attentionRefreshHandler);
     window.removeEventListener("beforeunload", this._beforeUnloadHandler);
     if (this._channelInfoListener) {
       this._unsubscribeChannelInfoListener?.();
@@ -2173,6 +2189,7 @@ export class Conversation
 
   // 上传已读数据
   uploadReadedIfNeed() {
+    if (!this.canRecordReadAttention()) return;
     const viewport = document.getElementById(this.vm.messageContainerId);
     const visiableMessages = this.allVisiableMessages(viewport);
     if (visiableMessages && visiableMessages.length > 0) {
@@ -2195,6 +2212,7 @@ export class Conversation
 
   // 更新已读位置和提醒项
   updateBrowseToMessageSeqAndReminderDoneIfNeed() {
+    if (!this.canRecordReadAttention()) return;
     const viewport = document.getElementById(this.vm.messageContainerId);
 
     this.updateBrowseToMessageSeq(viewport); // 更新已读位置
@@ -2203,6 +2221,17 @@ export class Conversation
   }
 
   // 更新已预览的位置
+  private canRecordReadAttention(): boolean {
+    return shouldMarkConversationRead({
+      chatModuleActive: WKApp.currentMenuId === "chat",
+      documentVisible: document.visibilityState === "visible",
+      windowFocused: document.hasFocus(),
+      currentConversation: !!WKApp.shared.openChannel?.isEqual(this.channel()),
+      // The callers still select the actual visible messages from the viewport.
+      newMessageVisible: true,
+    });
+  }
+
   updateBrowseToMessageSeq(viewport: HTMLElement | null) {
     const lastVisiableMessage = this.lastVisiableMessage(viewport); // 当前UI显示的最后一条可见的消息
     if (

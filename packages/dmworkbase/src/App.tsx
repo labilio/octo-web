@@ -59,7 +59,9 @@ export type MittEvents = {
    * 接收方可以据此刷新数据 — 同一路由长期挂载时用户重进菜单的场景下, 组件
    * 不会自动 remount, 接收方需要主动 reload。
    */
-  'wk:nav-menu-activated': { menuId: string };
+  "wk:nav-menu-activated": { menuId: string };
+  /** The canonical active top-level page changed (including boot, history and config reconciliation). */
+  "wk:active-menu-changed": { menuId?: string };
   /**
    * dmloop 派单(quick-create)后的看板补刷协议。派单是异步的(agent 稍后建 issue,dmloop 暂无 WS 推送):
    * NewLoopPage 派单成功发 `wk:loop-issues-dispatched`;常驻的 LoopPage 据此有界补发 `wk:loop-issues-refresh`,

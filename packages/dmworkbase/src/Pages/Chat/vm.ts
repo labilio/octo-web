@@ -26,28 +26,33 @@ import {
     fetchImChannelInfo,
     getImChannelInfo,
 } from "../../im-runtime/channelRuntime";
+import {
+  getBrowserUnreadConversationSync,
+  titleContextStore,
+} from "../../features/documentTitle";
 
 
 const TOP_CONVERSATION_SCORE_BOOST = 1000000000000;
 export class ChatVM extends ProviderListener {
-    conversations: ConversationWrap[] = new Array()
-    loading: boolean = false // 最近会话是否加载中
-    private _connectTitle: string = "" // 连接标题
-    connectStatus: number = 0 // 0=disconnected, 1=connected, 2=connecting
-    private _showChannelSetting: boolean = false // 是否显示频道设置
-    private _selectedConversation?: ConversationWrap // 选中的最近会话
-    private _showAddPopover = false // 点击添加按钮弹出的popover
-    private connectStatusListener!: ConnectStatusListener
-    private conversationListener!: ConversationListener
-    private channelListener!: ChannelInfoListener
-    private unsubscribeChannelInfoListener?: () => void
-    private messageDeleteListener!: MessageDeleteListener
-    private conversationListID = "wk-conversationlist"
-    private _showGlobalSearch = false // 是否显示全局搜索
-    private _selectedSpace?: Space // 选中的 Space
-    private _showSpaceCreate = false // 是否显示创建 Space 弹窗
-    private _spaceMemberUids: Set<string> = new Set() // 当前 space 的成员 uid 集合
-    private _pendingSpaceConversations: Map<string, Conversation> = new Map() // 等待 channelInfo 的新群会话
+  private readonly titleContextOwner = Symbol("chat-title-context");
+  conversations: ConversationWrap[] = new Array();
+  loading: boolean = false; // 最近会话是否加载中
+  private _connectTitle: string = ""; // 连接标题
+  connectStatus: number = 0; // 0=disconnected, 1=connected, 2=connecting
+  private _showChannelSetting: boolean = false; // 是否显示频道设置
+  private _selectedConversation?: ConversationWrap; // 选中的最近会话
+  private _showAddPopover = false; // 点击添加按钮弹出的popover
+  private connectStatusListener!: ConnectStatusListener;
+  private conversationListener!: ConversationListener;
+  private channelListener!: ChannelInfoListener;
+  private unsubscribeChannelInfoListener?: () => void;
+  private messageDeleteListener!: MessageDeleteListener;
+  private conversationListID = "wk-conversationlist";
+  private _showGlobalSearch = false; // 是否显示全局搜索
+  private _selectedSpace?: Space; // 选中的 Space
+  private _showSpaceCreate = false; // 是否显示创建 Space 弹窗
+  private _spaceMemberUids: Set<string> = new Set(); // 当前 space 的成员 uid 集合
+  private _pendingSpaceConversations: Map<string, Conversation> = new Map(); // 等待 channelInfo 的新群会话
     // 子区(CommunityTopic) sidebar-only 关注项的最近一次 thread.status 快照，按 channelID。
     // 仅用于 channelListener 里收敛重渲染：status 未变化时跳过 notifyListener（N2）。
     private _lastThreadStatusByChannel: Map<string, number | undefined> = new Map()
@@ -71,8 +76,9 @@ export class ChatVM extends ProviderListener {
     }
 
     set selectedConversation(v: ConversationWrap | undefined) {
-        this._selectedConversation = v
-        this.notifyListener()
+    this._selectedConversation = v;
+    this.syncSelectedConversationTitle();
+    this.notifyListener();
     }
 
     set showChannelSetting(v: boolean) {
@@ -313,6 +319,7 @@ export class ChatVM extends ProviderListener {
         WKSDK.shared().conversationManager.addConversationListener(this.conversationListener)
 
         this.channelListener = (channelInfo: ChannelInfo) => {
+      this.syncSelectedConversationTitle();
             // 群聊 channelInfo 到达时，更新 channelSpaceMap 并做 Space 二次过滤
             if (channelInfo.channel?.channelType === ChannelTypeGroup && channelInfo.orgData?.space_id) {
                 const key = `${channelInfo.channel.channelID}_${channelInfo.channel.channelType}`
@@ -383,15 +390,52 @@ export class ChatVM extends ProviderListener {
 
     }
     didUnMount(): void {
-        removeImConnectStatusListener(WKSDK.shared(), this.connectStatusListener)
-        WKSDK.shared().conversationManager.removeConversationListener(this.conversationListener)
-        this.unsubscribeChannelInfoListener?.()
-        this.unsubscribeChannelInfoListener = undefined
-        WKApp.shared.removeMessageDeleteListener(this.messageDeleteListener)
+    titleContextStore.clear("chat", this.titleContextOwner);
+    removeImConnectStatusListener(WKSDK.shared(), this.connectStatusListener);
+    WKSDK.shared().conversationManager.removeConversationListener(
+      this.conversationListener
+    );
+    this.unsubscribeChannelInfoListener?.();
+    this.unsubscribeChannelInfoListener = undefined;
+    WKApp.shared.removeMessageDeleteListener(this.messageDeleteListener);
         if (this.spaceChangedHandler) {
             WKApp.mittBus.off('space-changed', this.spaceChangedHandler)
         }
     }
+
+  private syncSelectedConversationTitle(): void {
+    const selected = this._selectedConversation;
+    if (!selected) {
+      titleContextStore.clear("chat", this.titleContextOwner);
+      return;
+    }
+    const channel = selected.channel;
+    const channelInfo = getImChannelInfo(WKSDK.shared(), channel);
+    const primaryTitle =
+      channelInfo?.title?.trim() || selected.channelInfo?.title?.trim();
+    if (!primaryTitle) {
+      titleContextStore.clear("chat", this.titleContextOwner);
+      return;
+    }
+
+    let parentTitle: string | undefined;
+    if (channel.channelType === ChannelTypeCommunityTopic) {
+      const parentGroupNo =
+        (channelInfo?.orgData?.parentGroupNo as string | undefined) ||
+        parseThreadChannelId(channel.channelID)?.groupNo;
+      if (parentGroupNo) {
+        parentTitle = getImChannelInfo(
+          WKSDK.shared(),
+          new Channel(parentGroupNo, ChannelTypeGroup)
+        )?.title?.trim();
+      }
+    }
+    titleContextStore.set(
+      "chat",
+      { primaryTitle, parentTitle },
+      this.titleContextOwner
+    );
+  }
 
     findConversation(channel: Channel) {
         if (this.conversations) {
@@ -457,12 +501,32 @@ export class ChatVM extends ProviderListener {
         if (!conversationWrap) {
             return
         }
-        await WKApp.conversationProvider.clearConversationMessages(conversationWrap.conversation)
-        conversationWrap.conversation.lastMessage = undefined
-        conversationWrap.conversation.unread = 0
-        WKApp.endpointManager.invoke(EndpointID.clearChannelMessages, channel)
-        this.sortConversations()
-        this.notifyListener()
+    await WKApp.conversationProvider.clearConversationMessages(
+      conversationWrap.conversation
+    );
+    conversationWrap.conversation.lastMessage = undefined;
+    conversationWrap.conversation.unread = 0;
+    if (
+      WKApp.shared.currentSpaceId &&
+      channel.channelType === ChannelTypePerson &&
+      conversationWrap.conversation.extra?.spaceUnread !== undefined
+    ) {
+      conversationWrap.conversation.extra.spaceUnread = 0;
+    }
+    WKSDK.shared().conversationManager.notifyConversationListeners(
+      conversationWrap.conversation,
+      ConversationAction.update
+    );
+    getBrowserUnreadConversationSync().publish({
+      accountId: WKApp.loginInfo.uid,
+      spaceId: WKApp.shared.currentSpaceId || "",
+      channelId: channel.channelID,
+      channelType: channel.channelType,
+      unread: 0,
+    });
+    WKApp.endpointManager.invoke(EndpointID.clearChannelMessages, channel);
+    this.sortConversations();
+    this.notifyListener();
     }
 
     setConnectTitleWithConnectStatus(connectStatus: ConnectStatus) {

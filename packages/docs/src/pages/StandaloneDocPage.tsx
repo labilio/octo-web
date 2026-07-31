@@ -1,18 +1,26 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
-import { getWKApp, t } from '../octoweb/index.ts'
-import { EditorShell } from '../editor/EditorShell.tsx'
-import { SheetView } from '../sheet/SheetView.tsx'
-import { BoardSession } from '../board/BoardSession.tsx'
-import { HtmlDocView } from '../html/HtmlDocView.tsx'
-import { DocTerminal, type TerminalKind } from '../editor/DocTerminal.tsx'
-import { RequestAccessButton } from '../access-request/RequestAccessButton.tsx'
-import { LinkIcon, type DocMoreMenuItem } from '../editor/DocMoreMenu.tsx'
-import { terminalForCreateError } from '../collab/useCollabEditor.ts'
-import { getDoc, recordDocView, type DocMeta } from './docsApi.ts'
-import { parseDocumentName } from '../documentName/index.ts'
-import { DEFAULT_DOC_SPACE, DEFAULT_DOC_FOLDER } from '../config.ts'
-import { useMemberNames } from '../members/useMemberNames.ts'
-import '../editor/styles.css'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+} from "react";
+import { getWKApp, t } from "../octoweb/index.ts";
+import { EditorShell } from "../editor/EditorShell.tsx";
+import { SheetView } from "../sheet/SheetView.tsx";
+import { BoardSession } from "../board/BoardSession.tsx";
+import { HtmlDocView } from "../html/HtmlDocView.tsx";
+import { DocTerminal, type TerminalKind } from "../editor/DocTerminal.tsx";
+import { RequestAccessButton } from "../access-request/RequestAccessButton.tsx";
+import { LinkIcon, type DocMoreMenuItem } from "../editor/DocMoreMenu.tsx";
+import { terminalForCreateError } from "../collab/useCollabEditor.ts";
+import { getDoc, recordDocView, type DocMeta } from "./docsApi.ts";
+import { parseDocumentName } from "../documentName/index.ts";
+import { DEFAULT_DOC_SPACE, DEFAULT_DOC_FOLDER } from "../config.ts";
+import { useMemberNames } from "../members/useMemberNames.ts";
+import { titleContextStore } from "@octo/base";
+import "../editor/styles.css";
 
 /**
  * sessionStorage key holding the full standalone target (`/d/:docId` path + query) captured
@@ -322,11 +330,28 @@ export function StandaloneDocPage({
    */
   onSessionExpired?: () => void
 }): ReactElement {
-  const wk = getWKApp()
-  const uid = wk.loginInfo?.uid ?? ''
-  const [phase, setPhase] = useState<Phase>({ status: 'loading' })
-  const [copied, setCopied] = useState(false)
-  const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const wk = getWKApp();
+  const uid = wk.loginInfo?.uid ?? "";
+  const [phase, setPhase] = useState<Phase>({ status: "loading" });
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const titleContextOwner = useRef(Symbol("standalone-doc-title-context"));
+
+  useEffect(() => {
+    if (phase.status !== "ready") {
+      titleContextStore.clear("docs", titleContextOwner.current);
+      return;
+    }
+    titleContextStore.set(
+      "docs",
+      {
+        primaryTitle: phase.meta.title || t("docs.state.untitled"),
+        moduleTitle: t("docs.menu.title"),
+      },
+      titleContextOwner.current
+    );
+    return () => titleContextStore.clear("docs", titleContextOwner.current);
+  }, [phase]);
 
   // Resolve the standalone space ONCE, and address BOTH the preflight's explicit X-Space-Id header
   // and the EditorShell room fallback from it, so preflight and room can never target different

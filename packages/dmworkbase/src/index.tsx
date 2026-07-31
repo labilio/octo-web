@@ -44,27 +44,29 @@ export type { ConversationProps } from './Components/Conversation'
 export type {
   InitialCompose,
   InitialComposeState,
-} from './Components/Conversation/initialCompose'
-export { default as Search } from './Components/Search'
-export { default as WKNavMainHeader } from './Components/WKNavHeader'
-export { default as WKViewQueueHeader } from './Components/WKViewQueueHeader'
-export { default as QRCodeMy } from './Components/QRCodeMy'
-export * from './Components/WKNavHeader'
-export { default as IconListItem } from './Components/IconListItem'
-export { default as WKBase } from './Components/WKBase'
-export { default as IconClick } from './Components/IconClick'
-export { default as ContextMenus } from './Components/ContextMenus'
-export { default as StorageService } from './Service/StorageService'
-export * from './Components/ContextMenus'
-export * from './Components/WKBase'
-export * from './Utils/t2s'
-export * from './Utils/pinYin'
-export { default as FileHelper } from './Utils/filehelper'
-export *  from './Utils/filehelper'
-export { NotificationUtil, notificationUtil } from './Utils/NotificationUtil'
-export * from './Utils/NotificationUtil'
-export * from './Utils/clipboard'
-export * from './Utils/docLink'
+} from "./Components/Conversation/initialCompose";
+export { default as Search } from "./Components/Search";
+export { default as WKNavMainHeader } from "./Components/WKNavHeader";
+export { default as WKViewQueueHeader } from "./Components/WKViewQueueHeader";
+export { default as QRCodeMy } from "./Components/QRCodeMy";
+export * from "./Components/WKNavHeader";
+export { default as IconListItem } from "./Components/IconListItem";
+export { default as WKBase } from "./Components/WKBase";
+export { default as IconClick } from "./Components/IconClick";
+export { default as ContextMenus } from "./Components/ContextMenus";
+export { default as StorageService } from "./Service/StorageService";
+export * from "./Components/ContextMenus";
+export * from "./Components/WKBase";
+export * from "./Utils/t2s";
+export * from "./Utils/pinYin";
+export { default as FileHelper } from "./Utils/filehelper";
+export * from "./Utils/filehelper";
+export { NotificationUtil, notificationUtil } from "./Utils/NotificationUtil";
+export * from "./Utils/NotificationUtil";
+export * from "./Utils/clipboard";
+export * from "./Utils/docLink";
+export * from "./features/documentTitle";
+export * from "./features/notifications";
 
 export { default as MessageBase } from "./Messages/Base"
 export  * from "./Messages/Image"
@@ -82,6 +84,7 @@ export * from "./Components/MeInfo";
 export * from "./Service/Context";
 export * from "./Components/SmallTableEdit";
 export * from "./Service/Convert";
+export * from "./Service/Model";
 
 export * from "./Utils/search"
 

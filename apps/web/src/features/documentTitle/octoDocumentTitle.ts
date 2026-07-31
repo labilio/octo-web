@@ -1,0 +1,146 @@
+import {
+  Channel,
+  ChannelTypeGroup,
+  ChannelTypePerson,
+  ConversationAction,
+  WKSDK,
+} from "wukongimjssdk";
+import {
+  ChannelTypeCommunityTopic,
+  ConversationWrap,
+  ThreadStatus,
+  WKApp,
+  addImChannelInfoListener,
+  countEffectiveUnreadConversations,
+  getBrowserUnreadConversationSync,
+  isEffectivelyMuted,
+  parseThreadChannelId,
+  shouldSkipChannelForSpace,
+  shouldSkipPersonConversationForSpace,
+  titleContextStore,
+  type UnreadConversationCandidate,
+} from "@octo/base";
+import {
+  DocumentTitleController,
+  resolveTitleMenuId,
+} from "./DocumentTitleController";
+
+function effectiveUnreadCandidates(): UnreadConversationCandidate[] {
+  return WKSDK.shared().conversationManager.conversations.map(
+    (conversation) => {
+      const channel = conversation.channel;
+      const channelInfo = WKSDK.shared().channelManager.getChannelInfo(channel);
+      const isThread = channel.channelType === ChannelTypeCommunityTopic;
+      const parentGroupNo = isThread
+        ? (channelInfo?.orgData?.parentGroupNo as string | undefined) ||
+          parseThreadChannelId(channel.channelID)?.groupNo
+        : undefined;
+      const parentChannelInfo = parentGroupNo
+        ? WKSDK.shared().channelManager.getChannelInfo(
+            new Channel(parentGroupNo, ChannelTypeGroup)
+          )
+        : undefined;
+      const threadStatus = channelInfo?.orgData?.thread?.status as
+        | number
+        | undefined;
+      const wrapped = new ConversationWrap(conversation);
+
+      return {
+        unread: wrapped.unread,
+        crossSpace:
+          shouldSkipChannelForSpace(channel) ||
+          (channel.channelType === ChannelTypePerson &&
+            shouldSkipPersonConversationForSpace(conversation)),
+        effectivelyMuted: isEffectivelyMuted({
+          isThread,
+          channelInfo,
+          parentChannelInfo,
+        }),
+        archived:
+          isThread &&
+          threadStatus !== undefined &&
+          threadStatus !== ThreadStatus.Active,
+      };
+    }
+  );
+}
+
+export function getEffectiveUnreadConversationCount(): number {
+  return countEffectiveUnreadConversations(effectiveUnreadCandidates());
+}
+
+function subscribeActiveMenu(listener: () => void): () => void {
+  const handler = () => listener();
+  WKApp.mittBus.on("wk:active-menu-changed", handler);
+  return () => WKApp.mittBus.off("wk:active-menu-changed", handler);
+}
+
+function subscribeUnreadChanges(listener: () => void): () => void {
+  const sdk = WKSDK.shared();
+  const conversationListener = () => listener();
+  const channelUnsubscribe = addImChannelInfoListener(sdk, () => listener());
+  const spaceChanged = () => listener();
+  const conversationsRefreshed = () => listener();
+  const unreadSyncUnsubscribe = getBrowserUnreadConversationSync().subscribe(
+    (update) => {
+      if (
+        update.accountId !== WKApp.loginInfo.uid ||
+        update.spaceId !== (WKApp.shared.currentSpaceId || "")
+      ) {
+        return;
+      }
+      const conversation = sdk.conversationManager.findConversation(
+        new Channel(update.channelId, update.channelType)
+      );
+      if (!conversation) return;
+      const unread = Math.max(0, update.unread);
+      if (
+        update.channelType === ChannelTypePerson &&
+        conversation.extra?.spaceUnread !== undefined
+      ) {
+        conversation.extra.spaceUnread = unread;
+      } else {
+        conversation.unread = unread;
+      }
+      sdk.conversationManager.notifyConversationListeners(
+        conversation,
+        ConversationAction.update
+      );
+    }
+  );
+
+  sdk.conversationManager.addConversationListener(conversationListener);
+  WKApp.mittBus.on("space-changed", spaceChanged);
+  WKApp.mittBus.on("conversation-list-refreshed", conversationsRefreshed);
+
+  return () => {
+    sdk.conversationManager.removeConversationListener(conversationListener);
+    channelUnsubscribe();
+    unreadSyncUnsubscribe();
+    WKApp.mittBus.off("space-changed", spaceChanged);
+    WKApp.mittBus.off("conversation-list-refreshed", conversationsRefreshed);
+  };
+}
+
+export function createOctoDocumentTitleController(): DocumentTitleController {
+  return new DocumentTitleController({
+    target: document,
+    contexts: titleContextStore,
+    getActiveMenu: () => {
+      const menuId = resolveTitleMenuId(
+        window.location.pathname,
+        WKApp.currentMenuId
+      );
+      if (!menuId) return undefined;
+      const activeMenu = WKApp.menus
+        .menusList()
+        .find((menu) => menu.id === menuId);
+      return activeMenu
+        ? { id: activeMenu.id, title: activeMenu.title }
+        : { id: menuId, title: "" };
+    },
+    getUnreadConversationCount: getEffectiveUnreadConversationCount,
+    subscribeActiveMenu,
+    subscribeUnreadChanges,
+  });
+}
