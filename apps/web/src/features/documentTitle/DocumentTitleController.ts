@@ -25,6 +25,7 @@ export interface DocumentTitleControllerOptions {
   getUnreadConversationCount: () => number;
   subscribeActiveMenu: (listener: () => void) => () => void;
   subscribeUnreadChanges: (listener: () => void) => () => void;
+  restoreUnreadState?: () => Promise<void> | void;
 }
 
 export class DocumentTitleController {
@@ -48,6 +49,19 @@ export class DocumentTitleController {
       this.options.subscribeUnreadChanges(this.invalidate),
     ];
     this.render();
+    const generation = this.lifecycleGeneration;
+    let restoration: Promise<void> | void;
+    try {
+      restoration = this.options.restoreUnreadState?.();
+    } catch {
+      return;
+    }
+    void Promise.resolve(restoration)
+      .then(() => {
+        if (generation !== this.lifecycleGeneration || !this.started) return;
+        this.invalidate();
+      })
+      .catch(() => undefined);
   }
 
   stop(): void {

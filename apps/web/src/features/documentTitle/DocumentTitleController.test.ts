@@ -99,6 +99,37 @@ describe("DocumentTitleController", () => {
     expect(writes).toEqual(["Test User 124 - Octo"]);
   });
 
+  it("recalculates unread after account state is restored outside the chat page", async () => {
+    const target = { title: "Octo" };
+    const store = new TitleContextStore();
+    let unreadCount = 0;
+    let finishRestore: (() => void) | undefined;
+    const restoreUnreadState = new Promise<void>((resolve) => {
+      finishRestore = () => {
+        unreadCount = 1;
+        resolve();
+      };
+    });
+    const controller = new DocumentTitleController({
+      target,
+      contexts: store,
+      getActiveMenu: () => ({ id: "contacts", title: "Contacts" }),
+      getUnreadConversationCount: () => unreadCount,
+      subscribeActiveMenu: () => () => undefined,
+      subscribeUnreadChanges: () => () => undefined,
+      restoreUnreadState: () => restoreUnreadState,
+    });
+
+    controller.start();
+    expect(target.title).toBe("Contacts - Octo");
+
+    finishRestore?.();
+    await restoreUnreadState;
+    await Promise.resolve();
+
+    expect(target.title).toBe("(1) Contacts - Octo");
+  });
+
   it("does not commit a queued title after stop", async () => {
     const target = { title: "Octo" };
     const store = new TitleContextStore();

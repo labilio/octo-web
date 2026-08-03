@@ -142,5 +142,13 @@ export function createOctoDocumentTitleController(): DocumentTitleController {
     getUnreadConversationCount: getEffectiveUnreadConversationCount,
     subscribeActiveMenu,
     subscribeUnreadChanges,
+    restoreUnreadState: async () => {
+      const pathname = window.location.pathname;
+      const menuId = resolveTitleMenuId(pathname, WKApp.currentMenuId);
+      // ChatPage owns the normal conversation hydration. Other full-page modules
+      // still need the same account-level unread snapshot for their title prefix.
+      if (menuId === "chat" || (!menuId && pathname === "/")) return;
+      await WKSDK.shared().conversationManager.sync({});
+    },
   });
 }
