@@ -42,6 +42,7 @@ export class ChatVM extends ProviderListener {
   private _showChannelSetting: boolean = false; // 是否显示频道设置
   private _selectedConversation?: ConversationWrap; // 选中的最近会话
   private _showAddPopover = false; // 点击添加按钮弹出的popover
+  private activeMenuChangedHandler?: (payload: { menuId?: string }) => void;
   private connectStatusListener!: ConnectStatusListener;
   private conversationListener!: ConversationListener;
   private channelListener!: ChannelInfoListener;
@@ -155,6 +156,14 @@ export class ChatVM extends ProviderListener {
     private spaceChangedHandler?: (space: any) => void
 
     didMount(): void {
+        this.activeMenuChangedHandler = ({ menuId }) => {
+            if (menuId === "chat") return
+            WKApp.shared.openChannel = undefined
+            this._showChannelSetting = false
+            this.selectedConversation = undefined
+        }
+        WKApp.mittBus.on("wk:active-menu-changed", this.activeMenuChangedHandler)
+
         // 监听 Space 切换（来自全局顶栏 SpaceList）
         this.spaceChangedHandler = (_space: any) => {
             // 确保 currentSpaceId 已更新（防止事件时序问题）
@@ -393,6 +402,13 @@ export class ChatVM extends ProviderListener {
     }
     didUnMount(): void {
     titleContextStore.clear("chat", this.titleContextOwner);
+    if (this.activeMenuChangedHandler) {
+      WKApp.mittBus.off(
+        "wk:active-menu-changed",
+        this.activeMenuChangedHandler
+      );
+      this.activeMenuChangedHandler = undefined;
+    }
     removeImConnectStatusListener(WKSDK.shared(), this.connectStatusListener);
     WKSDK.shared().conversationManager.removeConversationListener(
       this.conversationListener

@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 const hoisted = vi.hoisted(() => ({
     channelListener: undefined as undefined | ((channelInfo: any) => void),
     spaceChangedHandler: undefined as undefined | ((space: any) => void),
+    activeMenuHandlers: new Set<(payload: { menuId?: string }) => void>(),
     removeChannelListener: vi.fn(),
     popToRoot: vi.fn(),
     parseThreadChannelId: vi.fn(() => undefined as { groupNo: string } | undefined),
@@ -84,8 +85,11 @@ vi.mock("../../../App", () => ({
             emit: () => {},
             on: (event: string, handler: (payload: any) => void) => {
                 if (event === "space-changed") hoisted.spaceChangedHandler = handler
+                if (event === "wk:active-menu-changed") hoisted.activeMenuHandlers.add(handler)
             },
-            off: () => {},
+            off: (event: string, handler: (payload: any) => void) => {
+                if (event === "wk:active-menu-changed") hoisted.activeMenuHandlers.delete(handler)
+            },
         },
         menus: { refresh: () => {} },
         routeRight: { popToRoot: hoisted.popToRoot },
@@ -160,10 +164,17 @@ function mountVM(): ChatVM {
     return vm
 }
 
+function emitActiveMenuChanged(menuId?: string): void {
+    for (const handler of hoisted.activeMenuHandlers) handler({ menuId })
+}
+
 afterEach(() => {
     vi.restoreAllMocks()
     hoisted.parseThreadChannelId.mockReset()
     hoisted.parseThreadChannelId.mockReturnValue(undefined)
+    hoisted.activeMenuHandlers.clear()
+    ;(WKApp as any).currentMenuId = "chat"
+    WKApp.shared.openChannel = undefined
     titleContextStore.clear("chat")
 })
 
@@ -264,6 +275,54 @@ describe("ChatVM.spaceChangedHandler", () => {
         hoisted.spaceChangedHandler!({ space_id: "space-next" })
 
         expect(hoisted.popToRoot).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe("ChatVM active menu lifecycle", () => {
+    function selectConversation(vm: ChatVM) {
+        const selected = {
+            channel: { channelID: "testuser-124", channelType: 1 },
+            channelInfo: { title: "Test User 124" },
+        } as any
+        vm.selectedConversation = selected
+        WKApp.shared.openChannel = selected.channel
+        return selected
+    }
+
+    it("clears the current chat page state when another top-level module becomes active", () => {
+        const vm = mountVM()
+        selectConversation(vm)
+
+        emitActiveMenuChanged("contacts")
+
+        expect(vm.selectedConversation).toBeUndefined()
+        expect(WKApp.shared.openChannel).toBeUndefined()
+        expect(titleContextStore.get("chat")).toBeUndefined()
+    })
+
+    it("keeps the current conversation when Chat remains active", () => {
+        const vm = mountVM()
+        const selected = selectConversation(vm)
+
+        emitActiveMenuChanged("chat")
+
+        expect(vm.selectedConversation).toBe(selected)
+        expect(WKApp.shared.openChannel).toBe(selected.channel)
+        expect(titleContextStore.get("chat")).toEqual({
+            primaryTitle: "Test User 124",
+            parentTitle: undefined,
+        })
+    })
+
+    it("stops reacting to active-menu changes after unmount", () => {
+        const vm = mountVM()
+        const selected = selectConversation(vm)
+        vm.didUnMount()
+
+        emitActiveMenuChanged("contacts")
+
+        expect(vm.selectedConversation).toBe(selected)
+        expect(WKApp.shared.openChannel).toBe(selected.channel)
     })
 })
 
