@@ -28,13 +28,12 @@ import {
 } from "../../im-runtime/channelRuntime";
 import {
   getBrowserUnreadConversationSync,
-  titleContextStore,
 } from "../../features/documentTitle";
+import { chatPageTitleController } from "./chatPageTitleController";
 
 
 const TOP_CONVERSATION_SCORE_BOOST = 1000000000000;
 export class ChatVM extends ProviderListener {
-  private readonly titleContextOwner = Symbol("chat-title-context");
   conversations: ConversationWrap[] = new Array();
   loading: boolean = false; // 最近会话是否加载中
   private _connectTitle: string = ""; // 连接标题
@@ -78,7 +77,6 @@ export class ChatVM extends ProviderListener {
 
     set selectedConversation(v: ConversationWrap | undefined) {
     this._selectedConversation = v;
-    this.syncSelectedConversationTitle();
     this.notifyListener();
     }
 
@@ -158,6 +156,7 @@ export class ChatVM extends ProviderListener {
     didMount(): void {
         this.activeMenuChangedHandler = ({ menuId }) => {
             if (menuId === "chat") return
+            chatPageTitleController.clear()
             WKApp.shared.openChannel = undefined
             this._showChannelSetting = false
             this.selectedConversation = undefined
@@ -172,6 +171,7 @@ export class ChatVM extends ProviderListener {
             }
             WKSDK.shared().conversationManager.conversations = []
             this._pendingSpaceConversations.clear()
+            chatPageTitleController.clear()
             this.selectedConversation = undefined // 清空选中的会话
             WKApp.shared.openChannel = undefined // 清空全局打开的频道
             this._showChannelSetting = false // 关闭频道设置面板
@@ -328,9 +328,6 @@ export class ChatVM extends ProviderListener {
         WKSDK.shared().conversationManager.addConversationListener(this.conversationListener)
 
         this.channelListener = (channelInfo: ChannelInfo) => {
-      if (this.channelInfoAffectsSelectedConversation(channelInfo)) {
-        this.syncSelectedConversationTitle();
-      }
             // 群聊 channelInfo 到达时，更新 channelSpaceMap 并做 Space 二次过滤
             if (channelInfo.channel?.channelType === ChannelTypeGroup && channelInfo.orgData?.space_id) {
                 const key = `${channelInfo.channel.channelID}_${channelInfo.channel.channelType}`
@@ -401,7 +398,7 @@ export class ChatVM extends ProviderListener {
 
     }
     didUnMount(): void {
-    titleContextStore.clear("chat", this.titleContextOwner);
+    chatPageTitleController.clear();
     if (this.activeMenuChangedHandler) {
       WKApp.mittBus.off(
         "wk:active-menu-changed",
@@ -420,62 +417,6 @@ export class ChatVM extends ProviderListener {
             WKApp.mittBus.off('space-changed', this.spaceChangedHandler)
         }
     }
-
-  private syncSelectedConversationTitle(): void {
-    const selected = this._selectedConversation;
-    if (!selected) {
-      titleContextStore.clear("chat", this.titleContextOwner);
-      return;
-    }
-    const channel = selected.channel;
-    const channelInfo = getImChannelInfo(WKSDK.shared(), channel);
-    const primaryTitle =
-      channelInfo?.title?.trim() || selected.channelInfo?.title?.trim();
-    if (!primaryTitle) {
-      titleContextStore.clear("chat", this.titleContextOwner);
-      return;
-    }
-
-    let parentTitle: string | undefined;
-    if (channel.channelType === ChannelTypeCommunityTopic) {
-      const parentGroupNo =
-        (channelInfo?.orgData?.parentGroupNo as string | undefined) ||
-        parseThreadChannelId(channel.channelID)?.groupNo;
-      if (parentGroupNo) {
-        parentTitle = getImChannelInfo(
-          WKSDK.shared(),
-          new Channel(parentGroupNo, ChannelTypeGroup)
-        )?.title?.trim();
-      }
-    }
-    titleContextStore.set(
-      "chat",
-      { primaryTitle, parentTitle },
-      this.titleContextOwner
-    );
-  }
-
-  private channelInfoAffectsSelectedConversation(
-    channelInfo: ChannelInfo
-  ): boolean {
-    const selectedChannel = this._selectedConversation?.channel;
-    const changedChannel = channelInfo.channel;
-    if (!selectedChannel || !changedChannel) return false;
-    if (
-      selectedChannel.channelID === changedChannel.channelID &&
-      selectedChannel.channelType === changedChannel.channelType
-    ) {
-      return true;
-    }
-    if (
-      selectedChannel.channelType !== ChannelTypeCommunityTopic ||
-      changedChannel.channelType !== ChannelTypeGroup
-    ) {
-      return false;
-    }
-    const parentGroupNo = parseThreadChannelId(selectedChannel.channelID)?.groupNo;
-    return !!parentGroupNo && parentGroupNo === changedChannel.channelID;
-  }
 
     findConversation(channel: Channel) {
         if (this.conversations) {

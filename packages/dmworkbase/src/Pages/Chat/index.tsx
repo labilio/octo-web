@@ -80,6 +80,7 @@ import {
 import WebhookIssuePreviewPanel from "../../features/webhookMessagePreview/WebhookIssuePreviewPanel";
 import type { WebhookIssuePreviewTarget } from "../../bridge/message/webhookPreview";
 import { closeChatRightPanels, openChatRightPanel } from "./rightPanelState";
+import { chatPageTitleController } from "./chatPageTitleController";
 
 // 消息 ACK 只代表发送成功；后端把归档子区恢复为活跃存在短暂异步窗口。
 // 实测立即 threadGet 可能仍返回 Archived，因此发送后用短轮询等后端状态落稳。
@@ -289,6 +290,7 @@ export class ChatContentPage extends Component<
   private channelSearchPanelState?: ChannelSearchPanelState;
   private _unsubscribeChannelInfoListener?: () => void;
   private _unsubscribeChannelSearchConfig?: () => void;
+  private readonly titlePageOwner = Symbol("chat-content-page");
 
   constructor(props: any) {
     super(props);
@@ -508,12 +510,17 @@ export class ChatContentPage extends Component<
   componentDidMount() {
     const { channel } = this.props;
 
+    chatPageTitleController.activate(channel, this.titlePageOwner);
+
     // 监听文件预览事件
     WKApp.mittBus.on("wk:file-preview", this._onFilePreview);
 
     this.channelInfoListener = (channelInfo: ChannelInfo) => {
+      const titleContextChanged =
+        chatPageTitleController.handleChannelInfoChanged(channelInfo);
       // 监听当前频道或父群组的变化
       if (
+        titleContextChanged ||
         channelInfo.channel.isEqual(channel) ||
         (this.parentGroupChannel &&
           channelInfo.channel.isEqual(this.parentGroupChannel))
@@ -631,7 +638,9 @@ export class ChatContentPage extends Component<
     // 子区：预先获取父群组信息
     if (channel.channelType === ChannelTypeCommunityTopic) {
       const channelInfo = getImChannelInfo(WKSDK.shared(), channel);
-      const parentGroupNo = channelInfo?.orgData?.parentGroupNo;
+      const parentGroupNo =
+        channelInfo?.orgData?.parentGroupNo ||
+        parseThreadChannelId(channel.channelID)?.groupNo;
       if (parentGroupNo) {
         this.parentGroupChannel = new Channel(parentGroupNo, ChannelTypeGroup);
         if (!getImChannelInfo(WKSDK.shared(), this.parentGroupChannel)) {
@@ -648,6 +657,7 @@ export class ChatContentPage extends Component<
       channel.channelType !== prevProps.channel.channelType;
 
     if (channelChanged) {
+      chatPageTitleController.activate(channel, this.titlePageOwner);
       this._clearChannelSearchState();
       if (
         this.state.channelSearchPreviewFile ||
@@ -717,7 +727,9 @@ export class ChatContentPage extends Component<
       !this.parentGroupChannel
     ) {
       const channelInfo = getImChannelInfo(WKSDK.shared(), channel);
-      const parentGroupNo = channelInfo?.orgData?.parentGroupNo;
+      const parentGroupNo =
+        channelInfo?.orgData?.parentGroupNo ||
+        parseThreadChannelId(channel.channelID)?.groupNo;
       if (parentGroupNo) {
         this.parentGroupChannel = new Channel(parentGroupNo, ChannelTypeGroup);
         if (!getImChannelInfo(WKSDK.shared(), this.parentGroupChannel)) {
@@ -744,6 +756,7 @@ export class ChatContentPage extends Component<
   }) => void;
 
   componentWillUnmount() {
+    chatPageTitleController.deactivate(this.titlePageOwner);
     WKApp.mittBus.off("wk:file-preview", this._onFilePreview);
     if (this._onPendingThread) {
       WKApp.mittBus.off("wk:pending-thread", this._onPendingThread);

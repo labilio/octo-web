@@ -152,7 +152,7 @@ vi.mock("../../../Utils/download", () => ({
 
 import { ChatVM } from "../vm"
 import WKApp from "../../../App"
-import { titleContextStore } from "../../../features/documentTitle"
+import { chatPageTitleController } from "../chatPageTitleController"
 
 // 真实 Const 值：子区频道 channelType = 5
 const ChannelTypeCommunityTopic = 5
@@ -175,7 +175,7 @@ afterEach(() => {
     hoisted.activeMenuHandlers.clear()
     ;(WKApp as any).currentMenuId = "chat"
     WKApp.shared.openChannel = undefined
-    titleContextStore.clear("chat")
+    chatPageTitleController.clear()
 })
 
 describe("ChatVM.channelListener — CommunityTopic 子区同步 (issue #345)", () => {
@@ -292,26 +292,25 @@ describe("ChatVM active menu lifecycle", () => {
     it("clears the current chat page state when another top-level module becomes active", () => {
         const vm = mountVM()
         selectConversation(vm)
+        const clearTitleSpy = vi.spyOn(chatPageTitleController, "clear")
 
         emitActiveMenuChanged("contacts")
 
         expect(vm.selectedConversation).toBeUndefined()
         expect(WKApp.shared.openChannel).toBeUndefined()
-        expect(titleContextStore.get("chat")).toBeUndefined()
+        expect(clearTitleSpy).toHaveBeenCalledTimes(1)
     })
 
     it("keeps the current conversation when Chat remains active", () => {
         const vm = mountVM()
         const selected = selectConversation(vm)
+        const clearTitleSpy = vi.spyOn(chatPageTitleController, "clear")
 
         emitActiveMenuChanged("chat")
 
         expect(vm.selectedConversation).toBe(selected)
         expect(WKApp.shared.openChannel).toBe(selected.channel)
-        expect(titleContextStore.get("chat")).toEqual({
-            primaryTitle: "Test User 124",
-            parentTitle: undefined,
-        })
+        expect(clearTitleSpy).not.toHaveBeenCalled()
     })
 
     it("stops reacting to active-menu changes after unmount", () => {
@@ -323,63 +322,5 @@ describe("ChatVM active menu lifecycle", () => {
 
         expect(vm.selectedConversation).toBe(selected)
         expect(WKApp.shared.openChannel).toBe(selected.channel)
-    })
-})
-
-describe("ChatVM title channel-info relevance", () => {
-    it("ignores channel info that does not belong to the selected conversation", () => {
-        const vm = mountVM()
-        const selectedChannel = {
-            channelID: "testuser-124",
-            channelType: 1,
-            isEqual: (other: any) =>
-                other?.channelID === "testuser-124" && other?.channelType === 1,
-        }
-        vm.selectedConversation = {
-            channel: selectedChannel,
-            channelInfo: { title: "Test User 124" },
-        } as any
-        const titleSetSpy = vi.spyOn(titleContextStore, "set")
-
-        hoisted.channelListener!({
-            channel: { channelID: "someone-else", channelType: 1 },
-            title: "Someone Else",
-        })
-
-        expect(titleSetSpy).not.toHaveBeenCalled()
-
-        hoisted.channelListener!({
-            channel: selectedChannel,
-            title: "Test User 124",
-        })
-        expect(titleSetSpy).toHaveBeenCalledTimes(1)
-        titleSetSpy.mockRestore()
-    })
-
-    it("accepts the selected Thread parent but ignores another group", () => {
-        hoisted.parseThreadChannelId.mockReturnValue({ groupNo: "g1" })
-        const vm = mountVM()
-        vm.selectedConversation = {
-            channel: {
-                channelID: "g1____t1",
-                channelType: ChannelTypeCommunityTopic,
-            },
-            channelInfo: { title: "Thread 1" },
-        } as any
-        const titleSetSpy = vi.spyOn(titleContextStore, "set")
-
-        hoisted.channelListener!({
-            channel: { channelID: "g1", channelType: ChannelTypeGroup },
-            title: "Parent Group",
-        })
-        expect(titleSetSpy).toHaveBeenCalledTimes(1)
-
-        titleSetSpy.mockClear()
-        hoisted.channelListener!({
-            channel: { channelID: "g2", channelType: ChannelTypeGroup },
-            title: "Another Group",
-        })
-        expect(titleSetSpy).not.toHaveBeenCalled()
-        titleSetSpy.mockRestore()
     })
 })
