@@ -18,7 +18,7 @@ import { ErrorBoundary } from "../../Components/ErrorBoundary";
 import { Spin, Popover, Toast } from "@douyinfe/semi-ui";
 import WKButton from "../../Components/WKButton";
 import WKModal from "../../Components/WKModal";
-import { Columns2 } from "lucide-react";
+import { Columns2, ChevronRight } from "lucide-react";
 import ThreadIcon from "../../Components/Icons/ThreadIcon";
 import { ChatVM, handleGlobalSearchClick } from "./vm";
 import "./index.css";
@@ -960,7 +960,14 @@ export class ChatContentPage extends Component<
                         )}
                       </div>
                       <div className="wk-chat-conversation-header-channel-info">
-                        <div className="wk-chat-conversation-header-channel-info-name">
+                        <div
+                          className={classNames(
+                            "wk-chat-conversation-header-channel-info-name",
+                            channel.channelType === ChannelTypeCommunityTopic &&
+                              channelInfo?.orgData?.parentGroupNo &&
+                              "wk-chat-conversation-header-channel-info-name--thread"
+                          )}
+                        >
                           {channel.channelType === ChannelTypeCommunityTopic &&
                           channelInfo?.orgData?.parentGroupNo ? (
                             <>
@@ -992,7 +999,7 @@ export class ChatContentPage extends Component<
                                 )?.title || channelInfo.orgData.parentGroupNo}
                               </span>
                               <span className="wk-chat-conversation-header-separator">
-                                ›
+                                <ChevronRight aria-hidden="true" size={14} />
                               </span>
                               <span className="wk-chat-conversation-header-thread-name">
                                 {channelInfo?.orgData?.displayName}
@@ -1738,9 +1745,7 @@ export default class ChatPage extends Component<any, ChatPageState> {
                       // in a row (see MeInfo/vm.tsx for the same pattern).
                       const opened = window.open("about:blank", "_blank");
                       if (!opened) {
-                        Toast.warning(
-                          t("base.globalSearch.docs.popupBlocked")
-                        );
+                        Toast.warning(t("base.globalSearch.docs.popupBlocked"));
                         return;
                       }
                       try {
