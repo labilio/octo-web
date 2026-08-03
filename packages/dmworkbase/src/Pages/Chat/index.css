@@ -366,13 +366,23 @@
 .wk-chat-conversation-header-channel {
   display: flex;
   align-items: center;
+  gap: var(--wk-sp-2);
   min-width: 0;
   overflow: hidden;
+}
+
+.wk-chat-conversation-header-channel-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
 }
 
 .wk-chat-conversation-header-channel-avatar img {
   width: 28px;
   height: 28px;
+  display: block;
   border-radius: var(--wk-avatar-radius, 50%);
 }
 
@@ -397,7 +407,6 @@
 }
 
 .wk-chat-conversation-header-channel-info-name {
-  margin-left: 4px; /* Figma: gap=4 */
   font-size: 14px; /* Figma: 14px */
   font-weight: 500; /* Figma: 500 */
   color: var(--wk-brand-primary); /* Figma */
@@ -407,8 +416,7 @@
 }
 
 .wk-chat-conversation-header-channel-info-name--thread {
-  margin-left: 8px;
-  gap: 6px;
+  gap: var(--wk-sp-1-5);
 }
 
 /* 面包屑容器 */

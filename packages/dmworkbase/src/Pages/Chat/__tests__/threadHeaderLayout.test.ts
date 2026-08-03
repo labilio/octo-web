@@ -40,13 +40,31 @@ describe("Thread conversation header layout", () => {
     expect(threadRule).toContain("flex-shrink: 1");
   });
 
-  it("uses the approved spacing for the Thread breadcrumb", () => {
+  it("uses the shared leading-icon spacing for every conversation header", () => {
+    const channelRule = cssRule(".wk-chat-conversation-header-channel");
+    const nameRule = cssRule(
+      ".wk-chat-conversation-header-channel-info-name"
+    );
     const breadcrumbRule = cssRule(
       ".wk-chat-conversation-header-channel-info-name--thread"
     );
 
-    expect(breadcrumbRule).toContain("margin-left: 8px");
-    expect(breadcrumbRule).toContain("gap: 6px");
+    expect(channelRule).toContain("gap: var(--wk-sp-2)");
+    expect(nameRule).not.toContain("margin-left");
+    expect(breadcrumbRule).not.toContain("margin-left");
+    expect(breadcrumbRule).toContain("gap: var(--wk-sp-1-5)");
+  });
+
+  it("keeps the avatar image out of inline baseline layout", () => {
+    const avatarRule = cssRule(
+      ".wk-chat-conversation-header-channel-avatar"
+    );
+    const imageRule = cssRule(
+      ".wk-chat-conversation-header-channel-avatar img"
+    );
+
+    expect(avatarRule).toContain("line-height: 0");
+    expect(imageRule).toContain("display: block");
   });
 
   it("optically aligns the chevron with Chinese text", () => {
