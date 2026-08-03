@@ -701,6 +701,7 @@ export class ChatVM extends ProviderListener {
         this.notifyListener()
 
         WKApp.menus.refresh()
+        WKApp.mittBus.emit('conversation-list-refreshed')
     }
 }
 
