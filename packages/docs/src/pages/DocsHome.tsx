@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { AiBadge } from '@octo/base'
 import { getWKApp, getRouteRight, onSpaceChanged, onNavMenuActivated, t, fetchSpaceBotNames } from '../octoweb/index.ts'
 import { EditorShell } from '../editor/EditorShell.tsx'
 import { SheetView } from '../sheet/SheetView.tsx'
@@ -848,13 +849,14 @@ function DocsList({
                 {label}
               </span>
               {botUids.has(d.ownerId) && (
-                <span
+                <AiBadge
+                  size="small"
                   className="octo-docs-list-row-bot-badge"
                   title={t('docs.list.botBadge')}
                   aria-label={t('docs.list.botBadge')}
                 >
                   {t('docs.list.botBadge')}
-                </span>
+                </AiBadge>
               )}
             </span>
             {activeView === 'recent' ? (
@@ -2050,7 +2052,7 @@ export function DocsHome() {
   // the inline CSS split-pane (left list + right editor) so the layout still works.
   if (routeRight) {
     return (
-      <div className="octo-doc octo-docs-list-only">
+      <div className="octo-doc octo-docs-list-only octo-theme">
         <DocsList
           space={space}
           folder={folder}
@@ -2073,7 +2075,7 @@ export function DocsHome() {
   }
 
   return (
-    <div className="octo-doc octo-docs-split">
+    <div className="octo-doc octo-docs-split octo-theme">
       <aside className="octo-docs-split-left">
         <DocsList
           space={space}
