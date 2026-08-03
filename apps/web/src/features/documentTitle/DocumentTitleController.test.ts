@@ -19,7 +19,7 @@ describe("DocumentTitleController", () => {
     expect(resolveTitleMenuId("/contacts", "contacts")).toBe("contacts");
   });
 
-  it("renders from the active menu context and reacts without polling", () => {
+  it("renders from the active menu context and reacts without polling", async () => {
     const target = { title: "Octo" };
     const store = new TitleContextStore();
     let activeMenu = { id: "chat", title: "会话" };
@@ -45,16 +45,80 @@ describe("DocumentTitleController", () => {
     expect(target.title).toBe("(2) 会话 - Octo");
 
     store.set("chat", { primaryTitle: "产品群" });
+    await Promise.resolve();
     expect(target.title).toBe("(2) 产品群 - Octo");
 
     activeMenu = { id: "docs", title: "文档" };
     store.set("docs", { primaryTitle: "年度经营计划", moduleTitle: "文档" });
     for (const listener of menuListeners) listener();
+    await Promise.resolve();
     expect(target.title).toBe("(2) 年度经营计划 - 文档 - Octo");
 
     unreadCount = 0;
     for (const listener of unreadListeners) listener();
+    await Promise.resolve();
     expect(target.title).toBe("年度经营计划 - 文档 - Octo");
+  });
+
+  it("commits only the final title for a synchronous context and unread burst", async () => {
+    const writes: string[] = [];
+    let currentTitle = "Octo";
+    const target = {
+      get title() {
+        return currentTitle;
+      },
+      set title(value: string) {
+        currentTitle = value;
+        writes.push(value);
+      },
+    };
+    const store = new TitleContextStore();
+    let unreadCount = 1;
+    const unreadListeners = new Set<() => void>();
+    const controller = new DocumentTitleController({
+      target,
+      contexts: store,
+      getActiveMenu: () => ({ id: "chat", title: "Conversation" }),
+      getUnreadConversationCount: () => unreadCount,
+      subscribeActiveMenu: () => () => undefined,
+      subscribeUnreadChanges: (listener) => {
+        unreadListeners.add(listener);
+        return () => unreadListeners.delete(listener);
+      },
+    });
+
+    controller.start();
+    expect(target.title).toBe("(1) Conversation - Octo");
+    writes.length = 0;
+
+    store.set("chat", { primaryTitle: "Test User 124" });
+    unreadCount = 0;
+    for (const listener of unreadListeners) listener();
+    await Promise.resolve();
+
+    expect(writes).toEqual(["Test User 124 - Octo"]);
+  });
+
+  it("does not commit a queued title after stop", async () => {
+    const target = { title: "Octo" };
+    const store = new TitleContextStore();
+    const controller = new DocumentTitleController({
+      target,
+      contexts: store,
+      getActiveMenu: () => ({ id: "chat", title: "Conversation" }),
+      getUnreadConversationCount: () => 0,
+      subscribeActiveMenu: () => () => undefined,
+      subscribeUnreadChanges: () => () => undefined,
+    });
+
+    controller.start();
+    expect(target.title).toBe("Conversation - Octo");
+
+    store.set("chat", { primaryTitle: "Test User 124" });
+    controller.stop();
+    await Promise.resolve();
+
+    expect(target.title).toBe("Conversation - Octo");
   });
 
   it("stops every subscription", () => {

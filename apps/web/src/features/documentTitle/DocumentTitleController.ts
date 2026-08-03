@@ -31,6 +31,8 @@ export class DocumentTitleController {
   private readonly options: DocumentTitleControllerOptions;
   private unsubscribers: Array<() => void> = [];
   private started = false;
+  private renderScheduled = false;
+  private lifecycleGeneration = 0;
 
   constructor(options: DocumentTitleControllerOptions) {
     this.options = options;
@@ -39,19 +41,34 @@ export class DocumentTitleController {
   start(): void {
     if (this.started) return;
     this.started = true;
+    this.lifecycleGeneration += 1;
     this.unsubscribers = [
-      this.options.contexts.subscribe(this.render),
-      this.options.subscribeActiveMenu(this.render),
-      this.options.subscribeUnreadChanges(this.render),
+      this.options.contexts.subscribe(this.invalidate),
+      this.options.subscribeActiveMenu(this.invalidate),
+      this.options.subscribeUnreadChanges(this.invalidate),
     ];
     this.render();
   }
 
   stop(): void {
+    this.started = false;
+    this.lifecycleGeneration += 1;
+    this.renderScheduled = false;
     for (const unsubscribe of this.unsubscribers) unsubscribe();
     this.unsubscribers = [];
-    this.started = false;
   }
+
+  private invalidate = (): void => {
+    if (!this.started || this.renderScheduled) return;
+    this.renderScheduled = true;
+    const generation = this.lifecycleGeneration;
+    queueMicrotask(() => {
+      if (generation !== this.lifecycleGeneration) return;
+      this.renderScheduled = false;
+      if (!this.started) return;
+      this.render();
+    });
+  };
 
   private render = (): void => {
     const activeMenu = this.options.getActiveMenu();

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 // 捕获 ChatVM.channelListener（didMount 里通过 channelManager.addListener 注册）。
 const hoisted = vi.hoisted(() => ({
@@ -6,6 +6,7 @@ const hoisted = vi.hoisted(() => ({
     spaceChangedHandler: undefined as undefined | ((space: any) => void),
     removeChannelListener: vi.fn(),
     popToRoot: vi.fn(),
+    parseThreadChannelId: vi.fn(() => undefined as { groupNo: string } | undefined),
 }))
 
 vi.mock("wukongimjssdk", () => ({
@@ -130,7 +131,7 @@ vi.mock("../../../Service/SpaceService", () => ({
 }))
 
 vi.mock("../../../Service/Thread", () => ({
-    parseThreadChannelId: () => undefined,
+    parseThreadChannelId: hoisted.parseThreadChannelId,
 }))
 
 vi.mock("../../../EndpointCommon", () => ({
@@ -147,6 +148,7 @@ vi.mock("../../../Utils/download", () => ({
 
 import { ChatVM } from "../vm"
 import WKApp from "../../../App"
+import { titleContextStore } from "../../../features/documentTitle"
 
 // 真实 Const 值：子区频道 channelType = 5
 const ChannelTypeCommunityTopic = 5
@@ -157,6 +159,13 @@ function mountVM(): ChatVM {
     vm.didMount()
     return vm
 }
+
+afterEach(() => {
+    vi.restoreAllMocks()
+    hoisted.parseThreadChannelId.mockReset()
+    hoisted.parseThreadChannelId.mockReturnValue(undefined)
+    titleContextStore.clear("chat")
+})
 
 describe("ChatVM.channelListener — CommunityTopic 子区同步 (issue #345)", () => {
     it("收到子区 channelInfo 变化时调用 notifyListener（即便子区不在 conversations）", () => {
@@ -255,5 +264,63 @@ describe("ChatVM.spaceChangedHandler", () => {
         hoisted.spaceChangedHandler!({ space_id: "space-next" })
 
         expect(hoisted.popToRoot).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe("ChatVM title channel-info relevance", () => {
+    it("ignores channel info that does not belong to the selected conversation", () => {
+        const vm = mountVM()
+        const selectedChannel = {
+            channelID: "testuser-124",
+            channelType: 1,
+            isEqual: (other: any) =>
+                other?.channelID === "testuser-124" && other?.channelType === 1,
+        }
+        vm.selectedConversation = {
+            channel: selectedChannel,
+            channelInfo: { title: "Test User 124" },
+        } as any
+        const titleSetSpy = vi.spyOn(titleContextStore, "set")
+
+        hoisted.channelListener!({
+            channel: { channelID: "someone-else", channelType: 1 },
+            title: "Someone Else",
+        })
+
+        expect(titleSetSpy).not.toHaveBeenCalled()
+
+        hoisted.channelListener!({
+            channel: selectedChannel,
+            title: "Test User 124",
+        })
+        expect(titleSetSpy).toHaveBeenCalledTimes(1)
+        titleSetSpy.mockRestore()
+    })
+
+    it("accepts the selected Thread parent but ignores another group", () => {
+        hoisted.parseThreadChannelId.mockReturnValue({ groupNo: "g1" })
+        const vm = mountVM()
+        vm.selectedConversation = {
+            channel: {
+                channelID: "g1____t1",
+                channelType: ChannelTypeCommunityTopic,
+            },
+            channelInfo: { title: "Thread 1" },
+        } as any
+        const titleSetSpy = vi.spyOn(titleContextStore, "set")
+
+        hoisted.channelListener!({
+            channel: { channelID: "g1", channelType: ChannelTypeGroup },
+            title: "Parent Group",
+        })
+        expect(titleSetSpy).toHaveBeenCalledTimes(1)
+
+        titleSetSpy.mockClear()
+        hoisted.channelListener!({
+            channel: { channelID: "g2", channelType: ChannelTypeGroup },
+            title: "Another Group",
+        })
+        expect(titleSetSpy).not.toHaveBeenCalled()
+        titleSetSpy.mockRestore()
     })
 })

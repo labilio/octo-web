@@ -319,7 +319,9 @@ export class ChatVM extends ProviderListener {
         WKSDK.shared().conversationManager.addConversationListener(this.conversationListener)
 
         this.channelListener = (channelInfo: ChannelInfo) => {
-      this.syncSelectedConversationTitle();
+      if (this.channelInfoAffectsSelectedConversation(channelInfo)) {
+        this.syncSelectedConversationTitle();
+      }
             // 群聊 channelInfo 到达时，更新 channelSpaceMap 并做 Space 二次过滤
             if (channelInfo.channel?.channelType === ChannelTypeGroup && channelInfo.orgData?.space_id) {
                 const key = `${channelInfo.channel.channelID}_${channelInfo.channel.channelType}`
@@ -435,6 +437,28 @@ export class ChatVM extends ProviderListener {
       { primaryTitle, parentTitle },
       this.titleContextOwner
     );
+  }
+
+  private channelInfoAffectsSelectedConversation(
+    channelInfo: ChannelInfo
+  ): boolean {
+    const selectedChannel = this._selectedConversation?.channel;
+    const changedChannel = channelInfo.channel;
+    if (!selectedChannel || !changedChannel) return false;
+    if (
+      selectedChannel.channelID === changedChannel.channelID &&
+      selectedChannel.channelType === changedChannel.channelType
+    ) {
+      return true;
+    }
+    if (
+      selectedChannel.channelType !== ChannelTypeCommunityTopic ||
+      changedChannel.channelType !== ChannelTypeGroup
+    ) {
+      return false;
+    }
+    const parentGroupNo = parseThreadChannelId(selectedChannel.channelID)?.groupNo;
+    return !!parentGroupNo && parentGroupNo === changedChannel.channelID;
   }
 
     findConversation(channel: Channel) {
