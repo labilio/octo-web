@@ -21,7 +21,7 @@ describe("OIDC logout wiring", () => {
 
   it("uses backend-issued end_session_url for user-initiated settings logout", () => {
     const appSource = readRepoFile("packages/dmworkbase/src/App.tsx");
-    const navSource = readRepoFile("packages/dmworkbase/src/Components/NavRail/NavSettingsPanel.tsx");
+    const navSource = readRepoFile("packages/dmworkbase/src/features/settings/SettingsCenterFeature.tsx");
     const spaceGateSource = readRepoFile("apps/web/src/Components/SpaceGate/index.tsx");
     const joinSpaceSource = readRepoFile("apps/web/src/Components/JoinSpacePage/index.tsx");
 

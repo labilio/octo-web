@@ -6,7 +6,7 @@ import NavSpaceSwitcher from "./NavSpaceSwitcher";
 
 import NavItem from "./NavItem";
 import NavBottom from "./NavBottom";
-import NavSettingsPanel from "./NavSettingsPanel";
+import SettingsCenterFeature from "../../features/settings/SettingsCenterFeature";
 import WKAvatar from "../WKAvatar";
 import { t } from "../../i18n";
 import "./index.css";
@@ -18,7 +18,6 @@ export interface NavRailVMProps {
     currentMenus?: Menus;
     settingSelected: boolean;
     hasNewVersion: boolean;
-    showNewVersion: boolean;
     showAppVersion: boolean;
     showAppUpdate: boolean;
     appUpdateProgress: number;
@@ -26,7 +25,6 @@ export interface NavRailVMProps {
     lastVersionInfo?: { appVersion: string; updateDesc: string };
     onMenuClick: (menus: Menus) => void;
     onToggleSetting: () => void;
-    onSetShowNewVersion: (v: boolean) => void;
     onSetShowAppVersion: (v: boolean) => void;
     onInstallUpdate: () => void;
     onNotifyListener: () => void;
@@ -50,15 +48,12 @@ export interface NavRailVMProps {
 export interface NavRailProps extends NavRailVMProps {}
 
 export default class NavRail extends Component<NavRailProps> {
-    private settingsButtonRef = React.createRef<HTMLButtonElement>();
-
     render() {
         const {
             menusList,
             currentMenus,
             settingSelected,
             hasNewVersion,
-            showNewVersion,
             showAppVersion,
             showAppUpdate,
             appUpdateProgress,
@@ -66,7 +61,6 @@ export default class NavRail extends Component<NavRailProps> {
             lastVersionInfo,
             onMenuClick,
             onToggleSetting,
-            onSetShowNewVersion,
             onSetShowAppVersion,
             onInstallUpdate,
             onNotifyListener,
@@ -121,7 +115,6 @@ export default class NavRail extends Component<NavRailProps> {
                     {/* 底部：分割线 + 设置 + Space */}
                     <NavBottom
                         settingSelected={settingSelected}
-                        settingsButtonRef={this.settingsButtonRef}
                         hasNewVersion={hasNewVersion}
                         onSettingsClick={onToggleSetting}
                         onDismissNewVersion={onDismissNewVersion}
@@ -133,20 +126,20 @@ export default class NavRail extends Component<NavRailProps> {
                     />
                 </nav>
 
-                {/* 设置面板 + Modals（挂在 nav 外，避免 overflow 裁剪） */}
-                <NavSettingsPanel
-                    settingSelected={settingSelected}
-                    triggerRef={this.settingsButtonRef}
-                    hasNewVersion={hasNewVersion}
+                <SettingsCenterFeature
+                    visible={settingSelected}
                     canManageSpace={canManageSpace}
-                    showNewVersion={showNewVersion}
                     showAppVersion={showAppVersion}
                     showAppUpdate={showAppUpdate}
                     appUpdateProgress={appUpdateProgress}
                     showAppUpdateOperation={showAppUpdateOperation}
                     lastVersionInfo={lastVersionInfo}
-                    onToggleSetting={onToggleSetting}
-                    onSetShowNewVersion={onSetShowNewVersion}
+                    onOpen={() => {
+                        if (!settingSelected) onToggleSetting();
+                    }}
+                    onClose={() => {
+                        if (settingSelected) onToggleSetting();
+                    }}
                     onSetShowAppVersion={onSetShowAppVersion}
                     onInstallUpdate={onInstallUpdate}
                     onNotifyListener={onNotifyListener}
@@ -160,7 +153,6 @@ export default class NavRail extends Component<NavRailProps> {
 }
 
 export { NavSpaceSwitcher, NavItem, NavBottom };
-export { default as NavLanguageSwitcher } from "./NavLanguageSwitcher";
 export type { NavItemProps } from "./NavItem";
 export type { NavSpaceSwitcherProps } from "./NavSpaceSwitcher";
 export type { NavBottomProps } from "./NavBottom";

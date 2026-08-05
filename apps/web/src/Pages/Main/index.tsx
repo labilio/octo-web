@@ -1,4 +1,4 @@
-import { WKApp, WKLayout, Provider, WKModal, t } from "@octo/base";
+import { WKApp, WKLayout, Provider, t } from "@octo/base";
 import React, { Component } from "react";
 import "./index.css"
 import MainVM from "./vm";
@@ -9,7 +9,7 @@ import {
     shouldShowOnboarding,
 } from "../../Components/Onboarding/content";
 import { Space, SpaceService } from "@octo/base";
-import { JoinSpaceModalConnected, NavRail, MeInfo, SpaceCreate } from "@octo/base";
+import { JoinSpaceModalConnected, NavRail, SpaceCreate } from "@octo/base";
 import { consumeJoinSuccessNotice, showJoinSuccessToast } from "@octo/base";
 import { Toast } from "@douyinfe/semi-ui";
 
@@ -37,13 +37,12 @@ export class MainContentLeft extends Component<MainContentLeftProps> {
     }
 }
 
-// ─── MainPage：顶层，管理 Space/MeInfo/NavRail 状态 ───────────────────────
+// ─── MainPage：顶层，管理 Space/NavRail 状态 ─────────────────────────────
 
 interface MainPageState {
     allSpaces: Space[];
     showJoinSpace: boolean;
     showCreateSpace: boolean;
-    showMeInfo: boolean;
     showOnboardingGate: boolean;
     forceOnboardingVisible: boolean;
     skipOnboardingIntro: boolean;
@@ -69,7 +68,6 @@ export class MainPage extends Component<{}, MainPageState> {
             allSpaces: [],
             showJoinSpace: false,
             showCreateSpace: false,
-            showMeInfo: false,
             showOnboardingGate: shouldGateMainOnboarding(),
             forceOnboardingVisible: false,
             skipOnboardingIntro: false,
@@ -184,10 +182,10 @@ export class MainPage extends Component<{}, MainPageState> {
                 loginInfo.name = data.name;
                 loginInfo.sex = data.sex;
                 loginInfo.save();
-                this.setState({ showMeInfo: true });
+                WKApp.mittBus.emit("wk:open-settings", { category: "account" });
             })
             .catch(() => {
-                this.setState({ showMeInfo: true });
+                WKApp.mittBus.emit("wk:open-settings", { category: "account" });
             });
     };
 
@@ -214,7 +212,6 @@ export class MainPage extends Component<{}, MainPageState> {
             allSpaces,
             showJoinSpace,
             showCreateSpace,
-            showMeInfo,
             showOnboardingGate,
             forceOnboardingVisible,
             skipOnboardingIntro,
@@ -272,18 +269,12 @@ export class MainPage extends Component<{}, MainPageState> {
                                         // 设置
                                         settingSelected={vm.settingSelected}
                                         hasNewVersion={vm.hasNewVersion}
-                                        showNewVersion={vm.showNewVersion}
                                         showAppVersion={vm.showAppVersion}
                                         showAppUpdate={vm.showAppUpdate}
                                         appUpdateProgress={vm.appUpdateProgress}
                                         showAppUpdateOperation={vm.showAppUpdateOperation}
                                         lastVersionInfo={vm.lastVersionInfo}
                                         onToggleSetting={() => { vm.settingSelected = !vm.settingSelected; }}
-                                        onSetShowNewVersion={(v) => {
-                                            vm.showNewVersion = v;
-                                            if (!v) { vm.markVersionRead(); }
-                                            vm.notifyListener();
-                                        }}
                                         onSetShowAppVersion={(v) => {
                                             vm.showAppVersion = v;
                                             if (!v) { vm.markVersionRead(); }
@@ -327,16 +318,6 @@ export class MainPage extends Component<{}, MainPageState> {
                                 }}
                                 contentRight={<EmptyStateIllustration />}
                             />
-
-                            {/* MeInfo Modal */}
-                            <WKModal
-                                className="wk-main-sider-modal wk-main-sider-meinfo"
-                                visible={showMeInfo}
-                                options={{ mask: false, closable: false }}
-                                onCancel={() => this.setState({ showMeInfo: false })}
-                            >
-                                <MeInfo onClose={() => this.setState({ showMeInfo: false })} />
-                            </WKModal>
 
                             <JoinSpaceModalConnected
                                 visible={showJoinSpace}

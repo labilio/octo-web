@@ -76,12 +76,16 @@ export type MittEvents = {
   /**
    * 打开「密钥 / Secrets」管理面板（YUJ-3539）。由聊天反向跳转（bot 消息里的
    * 「去添加密钥」按钮）或输入框防手滑提示触发；payload 可携带预填名字 / 明文，
-   * 接收方 NavSecretsSettingsItem 据此打开面板并预填新增弹窗（绝不自动发送/保存）。
+   * 接收方 SettingsCenterFeature 据此打开「AI 与输入」并预填新增表单（绝不自动发送/保存）。
    */
   'wk:open-secrets': {
     create?: boolean;
     name?: string;
     value?: string;
+  } | undefined;
+  /** Open the unified personal settings center at a stable primary category. */
+  'wk:open-settings': {
+    category?: import('./features/settings/registry').SettingsCategoryId;
   } | undefined;
   "summary-space-changed": undefined;
   /**

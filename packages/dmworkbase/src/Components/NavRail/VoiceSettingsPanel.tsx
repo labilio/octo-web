@@ -15,11 +15,11 @@ import { useI18n } from '../../i18n';
 import WKButton from '../WKButton';
 import './VoiceSettingsPanel.css';
 
-interface VoiceSettingsPanelProps {
+export interface VoiceSettingsPanelProps {
   onClose: () => void;
 }
 
-export default function VoiceSettingsPanel({ onClose }: VoiceSettingsPanelProps) {
+export function VoiceSettingsContent() {
   const { spaceSetting, loaded, voiceConfig, apiAvailable, updateSetting } = useSpaceFeedbackSetting();
   const { t } = useI18n();
   const [loading, setLoading] = useState(false);
@@ -215,14 +215,7 @@ export default function VoiceSettingsPanel({ onClose }: VoiceSettingsPanelProps)
   }, [localProbeUrl, probeTestStatus]);
 
   return (
-    <WKModal
-      visible
-      title={null}
-      onCancel={onClose}
-      options={{ closeOnEsc: true, maskClosable: true, closable: false }}
-      footer={null}
-      className="wk-voice-settings-modal"
-    >
+    <>
       <div className="wk-voice-settings">
         {loaded && !apiAvailable && (
           <div className="wk-voice-settings__notice">
@@ -381,6 +374,21 @@ export default function VoiceSettingsPanel({ onClose }: VoiceSettingsPanelProps)
           feedbackUserAgreementUrl={agreementUrl}
         />
       )}
+    </>
+  );
+}
+
+export default function VoiceSettingsPanel({ onClose }: VoiceSettingsPanelProps) {
+  return (
+    <WKModal
+      visible
+      title={null}
+      onCancel={onClose}
+      options={{ closeOnEsc: true, maskClosable: true, closable: false }}
+      footer={null}
+      className="wk-voice-settings-modal"
+    >
+      <VoiceSettingsContent />
     </WKModal>
   );
 }

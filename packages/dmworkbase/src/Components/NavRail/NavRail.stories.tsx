@@ -2,9 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import React from "react";
 import NavRail from "./index";
 import type { NavRailProps } from "./index";
-import NavBottom from "./NavBottom";
 import NavSpaceSwitcher from "./NavSpaceSwitcher";
-import NavSettingsPanel from "./NavSettingsPanel";
 import { Menus } from "../../Service/Menus";
 import "../../theme/index.css";
 
@@ -26,7 +24,6 @@ const defaultArgs: NavRailProps = {
     currentMenus: messagesMenu,
     settingSelected: false,
     hasNewVersion: false,
-    showNewVersion: false,
     showAppVersion: false,
     showAppUpdate: false,
     appUpdateProgress: 0,
@@ -35,7 +32,6 @@ const defaultArgs: NavRailProps = {
     currentSpaceId: "s1",
     onMenuClick: (menus) => console.log("nav menu clicked:", menus.id),
     onToggleSetting: () => console.log("settings toggled"),
-    onSetShowNewVersion: (v) => console.log("show new version:", v),
     onSetShowAppVersion: (v) => console.log("show app version:", v),
     onInstallUpdate: () => console.log("install update"),
     onNotifyListener: () => console.log("notify listener"),
@@ -75,31 +71,9 @@ export const Default: Story = {
     args: defaultArgs,
 };
 
-export const SettingsFlyoutOpen: Story = {
-    name: "设置弹层（真实组件）",
+export const SettingsCenterOpen: Story = {
+    name: "设置中心（真实组件）",
     args: { ...defaultArgs, settingSelected: true },
-};
-
-function BottomLanguageOpen() {
-    const containerRef = React.useRef<HTMLDivElement>(null);
-    React.useEffect(() => {
-        const button = containerRef.current?.querySelector<HTMLButtonElement>(".wk-navrail__language");
-        button?.click();
-    }, []);
-    return (
-        <div ref={containerRef} className="wk-navrail" style={{ height: 220, justifyContent: "flex-end" }}>
-            <NavBottom
-                spaces={mockSpaces as any[]}
-                currentSpaceId="s1"
-                onSpaceSelect={(id) => console.log("space selected:", id)}
-            />
-        </div>
-    );
-}
-
-export const LanguageFlyoutOpen: StoryObj = {
-    name: "语言弹层（真实组件）",
-    render: () => <BottomLanguageOpen />,
 };
 
 function SpaceOpen() {
@@ -124,39 +98,4 @@ function SpaceOpen() {
 export const SpaceFlyoutOpen: StoryObj = {
     name: "Space 弹层（真实组件）",
     render: () => <SpaceOpen />,
-};
-
-function FlyoutComparison() {
-    const settingsTriggerRef = React.useRef<HTMLButtonElement>(null);
-    return (
-        <div style={{ display: "flex", gap: 260, alignItems: "flex-end", height: "100vh", padding: "0 0 80px 24px" }}>
-            <BottomLanguageOpen />
-            <div className="wk-navrail" style={{ height: 220, justifyContent: "flex-end" }}>
-                <div className="wk-navrail__settings-wrap">
-                    <button
-                        ref={settingsTriggerRef}
-                        type="button"
-                        className="wk-navrail__item"
-                        aria-label="设置"
-                        aria-haspopup="menu"
-                        aria-expanded
-                    >
-                        <Icon label="⚙️" />
-                    </button>
-                </div>
-            </div>
-            <NavSettingsPanel
-                {...defaultArgs}
-                settingSelected
-                triggerRef={settingsTriggerRef}
-                onToggleSetting={() => console.log("settings toggled")}
-            />
-            <SpaceOpen />
-        </div>
-    );
-}
-
-export const FlyoutComparisonOpen: StoryObj = {
-    name: "语言 / 设置 / Space 弹层对照",
-    render: () => <FlyoutComparison />,
 };

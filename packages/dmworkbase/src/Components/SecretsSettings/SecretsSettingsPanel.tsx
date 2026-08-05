@@ -25,6 +25,8 @@ export interface SecretsSettingsPanelProps {
   prefillValue?: string;
 }
 
+export type SecretsSettingsContentProps = Omit<SecretsSettingsPanelProps, "onClose">;
+
 type EditTarget =
   | { mode: "create"; prefillName?: string; prefillValue?: string }
   | { mode: "edit"; secret: SecretListItem }
@@ -37,12 +39,11 @@ type EditTarget =
  * 操作含编辑名字 / 更新 key / 删除 / 复制引用名。右上「+ 新增密钥」。
  * 空状态引导用户去聊天里用自然语言引用。
  */
-export default function SecretsSettingsPanel({
-  onClose,
+export function SecretsSettingsContent({
   initialCreate,
   prefillName,
   prefillValue,
-}: SecretsSettingsPanelProps) {
+}: SecretsSettingsContentProps) {
   const { t, format } = useI18n();
   const [items, setItems] = useState<SecretListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,15 +129,7 @@ export default function SecretsSettingsPanel({
   };
 
   return (
-    <WKModal
-      visible
-      title={null}
-      onCancel={onClose}
-      options={{ closeOnEsc: true, maskClosable: true, closable: false }}
-      footer={null}
-      size="lg"
-      className="wk-secrets-modal"
-    >
+    <>
       <div className="wk-secrets">
         {/* 头部：标题 + 副标题 + 新增 */}
         <div className="wk-secrets__header">
@@ -256,6 +249,22 @@ export default function SecretsSettingsPanel({
           onSaved={() => void load()}
         />
       )}
+    </>
+  );
+}
+
+export default function SecretsSettingsPanel({ onClose, ...contentProps }: SecretsSettingsPanelProps) {
+  return (
+    <WKModal
+      visible
+      title={null}
+      onCancel={onClose}
+      options={{ closeOnEsc: true, maskClosable: true, closable: false }}
+      footer={null}
+      size="lg"
+      className="wk-secrets-modal"
+    >
+      <SecretsSettingsContent {...contentProps} />
     </WKModal>
   );
 }

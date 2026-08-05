@@ -83,6 +83,10 @@
     {
       "path": "packages/dmworksummary/src/utils/channelType.ts",
       "reason": "Error message template with interpolation placeholder; already covered by runtime error handling with proper i18n."
+    },
+    {
+      "path": "packages/dmworkbase/src/features/settings/registry.ts",
+      "reason": "Settings search synonym metadata in separate zh-CN/en-US arrays. These terms are indexed data, never rendered as UI copy; all visible titles and descriptions use i18n keys."
     }
   ]
 }

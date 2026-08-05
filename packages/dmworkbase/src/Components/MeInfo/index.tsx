@@ -18,6 +18,10 @@ import "./index.css"
 
 export interface MeInfoProps {
     onClose: () => void
+    /** Render the profile content inside another settings shell. */
+    embedded?: boolean
+    /** Fired once when the hidden five-tap labs gesture succeeds. */
+    onLabModeEnabled?: () => void
 }
 
 interface MeInfoState {
@@ -229,7 +233,7 @@ export class MeInfo extends Component<MeInfoProps, MeInfoState> {
         )
     }
 
-    renderPanel(vm: MeInfoVM, context: RouteContext<any>) {
+    renderPanel(vm: MeInfoVM, context?: RouteContext<any>) {
         const { t } = this.context
         const {
             editingName,
@@ -286,7 +290,7 @@ export class MeInfo extends Component<MeInfoProps, MeInfoState> {
                     nameDraft={nameDraft}
                     genderValue={vm.sexLabel()}
                     realnameValue={verified ? vm.formatVerifiedAtLabel() : t("base.me.realname.verifyNow")}
-                    showExperimentalFeatures={vm.isLabModeEnabled()}
+                    showExperimentalFeatures={!this.props.embedded && vm.isLabModeEnabled()}
                     editingName={editingName}
                     savingName={savingName}
                     uploadingAvatar={uploadingAvatar}
@@ -295,11 +299,19 @@ export class MeInfo extends Component<MeInfoProps, MeInfoState> {
                     onNameDraftChange={(value) => this.setState({ nameDraft: value })}
                     onCancelName={this.cancelEditName}
                     onSaveName={() => this.saveName(vm)}
-                    onShortNoTap={() => vm.handleShortNoTap()}
+                    onShortNoTap={() => {
+                        const wasEnabled = vm.isLabModeEnabled()
+                        vm.handleShortNoTap()
+                        if (!wasEnabled && vm.isLabModeEnabled()) {
+                            this.props.onLabModeEnabled?.()
+                        }
+                    }}
                     onShowQrCode={() => this.setState({ showQrCode: true })}
                     onShowGender={() => this.setState({ showSexSelect: true })}
                     onRealnameClick={() => vm.startRealnameVerify()}
-                    onShowExperimentalFeatures={() => this.showExperimentalFeatures(context)}
+                    onShowExperimentalFeatures={() => {
+                        if (context) this.showExperimentalFeatures(context)
+                    }}
                 />
             </div>
 
@@ -409,6 +421,9 @@ export class MeInfo extends Component<MeInfoProps, MeInfoState> {
         return <Provider create={function (): IProviderListener {
             return new MeInfoVM()
         }} render={(vm: MeInfoVM): ReactNode => {
+            if (this.props.embedded) {
+                return this.renderPanel(vm)
+            }
             return <RoutePage title={title} onClose={this.handleClose} className="wk-meinfo-route" render={(context: RouteContext<any>): ReactNode => {
                 return this.renderPanel(vm, context)
             }}></RoutePage>

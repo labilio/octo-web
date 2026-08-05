@@ -1,0 +1,68 @@
+.wk-settings-detail-back {
+  margin-bottom: var(--wk-sp-4);
+}
+
+.wk-settings-client__qr {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--wk-sp-2);
+  border-radius: var(--wk-r-md);
+  background: var(--wk-color-white);
+}
+
+.wk-settings-client__qr--state {
+  width: 88px;
+  min-height: 88px;
+  box-sizing: content-box;
+  background: var(--wk-bg-base);
+  color: var(--wk-text-secondary);
+  text-align: center;
+}
+
+.wk-settings-center__logout {
+  color: var(--wk-color-error);
+}
+
+.wk-settings-update-info {
+  max-height: 320px;
+  overflow: auto;
+}
+
+.wk-settings-page .wk-meinfo,
+.wk-settings-page .wk-voice-settings,
+.wk-settings-page .wk-secrets {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+}
+
+.wk-settings-page .wk-meinfo-panel {
+  gap: var(--wk-sp-10);
+  padding: 0;
+}
+
+.wk-settings-page .wk-meinfo-section {
+  margin: 0;
+}
+
+.wk-settings-page .wk-meinfo-section-title {
+  display: block;
+  margin-bottom: var(--wk-sp-2);
+  color: var(--wk-text-primary);
+  font: var(--wk-text-h3);
+}
+
+.wk-settings-page .wk-meinfo-section-rows {
+  overflow: visible;
+  border: 0;
+  border-top: 1px solid var(--wk-border-subtle);
+  border-radius: 0;
+  background: transparent;
+}
+
+.wk-settings-page .wk-meinfo-row {
+  min-height: 68px;
+  padding: var(--wk-sp-3) 0;
+  border-bottom: 1px solid var(--wk-border-subtle);
+}
